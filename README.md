@@ -17,7 +17,7 @@ git clone https://github.com/paxtonbacon/Ueyo.git
 
 cd Ueyo
 
-# 重新修改 main.cpp
+找个IDE重新修改 main.cpp
 
 git add main.cpp
 
@@ -35,7 +35,7 @@ cd 进入已有的仓库目录
 
 git pull                    # 1. 拉取最新代码（获取别人可能的修改）
 
-# 修改 main.cpp...          # 2. 用编辑器修改文件
+修改 main.cpp...            # 2. 用编辑器修改文件
 
 git add main.cpp            # 3. 暂存修改
 
