@@ -15,7 +15,7 @@ cd 自己选则仓库目录存放位置
 
 git clone https://github.com/paxtonbacon/Ueyo.git
 
-cd Ueyo
+cd Ueyo  #无需自己init一个git仓库
 
 找个IDE重新修改 main.cpp
 
