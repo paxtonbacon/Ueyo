@@ -6,7 +6,6 @@ int main()
   cout<<"xzx,到！"<<endl;
   cout<<"lyb,到！"<<endl;//111//
   cout<<"safhwe"<<endl;
-  cout << "ZR is ready." <<endl;
-  cout<< "guo hao dao" <<endl;
+  cout << "ZR is ready." <<endl; 
   return 0;
 }
