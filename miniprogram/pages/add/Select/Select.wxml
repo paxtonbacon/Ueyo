@@ -1,0 +1,35 @@
+<!--pages/add/Select/Select.wxml-->
+<navigation-bar title="添加" back="{{false}}" color="black" background="#FFF"></navigation-bar>
+<!-- 顶部商标图片区域 -->
+<view class="header">
+  <image class="logo" src="/images/hero.png" mode="aspectFit"></image>
+</view>
+
+<!-- 绿色标语 -->
+<view class="slogan">
+  <text class="slogan-text">有哟，什么都有了！</text>
+</view>
+
+<!-- 物品模块 -->
+<view class="section">
+  <view class="section-title">物品广场</view>
+  <view class="item-cards">
+    <!-- 商品卡片 -->
+    <view class="card card-gray" bindtap="onGoodsTap" hover-class="card-hover">
+      <text class="card-title">商品</text>
+    </view>
+    <!-- 悬赏卡片 -->
+    <view class="card card-gray" bindtap="onRewardTap" hover-class="card-hover">
+      <text class="card-title">悬赏</text>
+    </view>
+  </view>
+</view>
+
+<!-- 话题模块 -->
+<view class="section">
+  <view class="section-title">热门话题</view>
+  <view class="topic-card card-gray" bindtap="onTopicTap" hover-class="card-hover">
+    <text class="topic-title">话题</text>
+    <text class="topic-logo">交流讨论的好地方</text>
+  </view>
+</view>

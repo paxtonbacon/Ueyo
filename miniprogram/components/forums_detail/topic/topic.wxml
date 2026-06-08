@@ -1,0 +1,50 @@
+<!--components/forums_detail/topic/topic.wxml-->
+<!-- topic-set.wxml 修改部分 -->
+<view class="topic-set">
+  <block wx:for="{{displayTopics}}" wx:key="index">
+    <!-- 给整个话题块添加点击事件，传递索引 -->
+    <view class="topic-block" data-index="{{index}}" bindtap="onTopicTap">
+      <view class="topic-title">{{item.title}}</view>
+      <view class="topic-desc">{{item.desc}}</view>
+      
+      <!-- 前4个帖子的标题片段展示（保持不变） -->
+      <view class="post-titles">
+        <view 
+          wx:for="{{item.posts}}" 
+          wx:for-item="post" 
+          wx:for-index="idx" 
+          wx:key="idx" 
+          wx:if="{{idx < 4}}" 
+          class="post-title-item"
+        >
+          <text class="post-title-index">{{idx + 1}}.</text>
+          <text class="post-title-text">{{post.titleSnippet}}</text>
+        </view>
+      </view>
+      
+      <!-- 前4个帖子的首图并排展示（保持不变） -->
+      <view class="post-images">
+        <view 
+          wx:for="{{item.posts}}" 
+          wx:for-item="post" 
+          wx:for-index="idx" 
+          wx:key="idx" 
+          wx:if="{{idx < 4}}" 
+          class="image-item"
+        >
+          <image 
+            class="post-image" 
+            src="{{post.coverImage || defaultCover}}" 
+            mode="aspectFill" 
+            lazy-load
+          />
+        </view>
+      </view>
+    </view>
+    
+    <!-- 分割线（依旧放在外部，不会被点击触发跳转） -->
+    <view wx:if="{{index !== displayTopics.length - 1}}" class="divider"></view>
+  </block>
+  
+  <view wx:if="{{displayTopics.length === 0}}" class="empty-tip">暂无话题内容</view>
+</view>

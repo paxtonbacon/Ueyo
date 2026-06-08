@@ -1,0 +1,94 @@
+<!--pages/ueyo/goods-detail/goods-detail.wxml-->
+<!-- 自定义导航栏（fixed） -->
+<view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-bar-inner" style="padding-right: {{rightCapsuleSafePadding}};">
+    <!-- 左侧：返回按钮 + 用户头像 + 昵称 -->
+    <view class="nav-left">
+      <view class="back-btn" bindtap="onBack">
+        <image class="back-icon" src="/images/icon_back.png" mode="aspectFit"></image>
+      </view>
+      <view class="user-info" bindtap="onAvatarTap">
+        <image class="user-avatar" src="{{goodsInfo.sellerAvatar}}" mode="aspectFill"></image>
+        <text class="user-name">{{goodsInfo.sellerName}}</text>
+      </view>
+    </view>
+
+    <!-- 中间占位 -->
+    <view class="nav-center">
+      <!-- <view class="msg-btn" bindtap="onMsgTap">
+        <text>私信</text>
+      </view> -->
+    </view>
+
+    <!-- 右侧：私信按钮 -->
+    <view class="nav-right">
+    </view>
+  </view>
+</view>
+
+<!-- 滚动区域的外层容器（负责为导航栏留出空间） -->
+<view class="scroll-wrapper" style="padding-top: {{navTotalHeight}}px;">
+  <!-- 主体内容（滚动区域，避开导航栏） -->
+  <scroll-view 
+    class="main-content" 
+    scroll-y 
+    enhanced 
+    show-scrollbar="{{false}}" 
+    style="height: {{scrollViewHeight}}px; padding-top: {{navTotalHeight}}; padding-bottom: 0px"
+  >
+    <!-- 图片轮播 -->
+    <swiper class="image-swiper" indicator-dots="{{true}}" indicator-color="rgba(0,0,0,0.3)" indicator-active-color="#ffffff" circular="{{true}}" autoplay="{{false}}">
+      <swiper-item wx:for="{{goodsInfo.images}}" wx:key="index">
+        <image class="swiper-image" src="{{item}}" mode="aspectFill"></image>
+      </swiper-item>
+    </swiper>
+
+    <!-- 价格与成新 -->
+    <view class="price-section">
+      <text class="price">¥{{goodsInfo.price}}</text>
+      <text class="condition">{{goodsInfo.condition}}成新</text>
+    </view>
+
+    <!-- 标题 -->
+    <text class="title">{{goodsInfo.title}}</text>
+
+    <!-- 描述 -->
+    <text class="desc">{{goodsInfo.desc}}</text>
+
+    <!-- 交易方式 -->
+    <view class="trade-ways">
+      <text class="trade-label">交易方式：</text>
+      <text class="trade-value">{{goodsInfo.tradeWays}}</text>
+    </view>
+
+    <!-- ========= 评论模块（预留，后续替换为论坛评论组件） ========= -->
+    <view class="comment-placeholder">
+      <text class="comment-title">评论</text>
+      <!-- 此处后续替换为 <forum-comment /> 组件 -->
+      <view class="comment-demo">
+        <text>📝 评论组件预留区域（论坛评论组件待接入）</text>
+      </view>
+    </view>
+
+    <!-- ========= 底部商品推荐 ========= -->
+    <view class="recommend-section">
+      <text class="section-title">猜你喜欢</text>
+      <goods-list id="recommendGoodsList" type="goods" />
+    </view>
+  </scroll-view>
+</view>
+
+<!-- 底部操作栏（固定） -->
+<view class="bottom-bar" style="padding-bottom: {{safeAreaBottom}}px;">
+  <view class="bar-content">
+    <!-- 左侧收藏按钮 -->
+    <view class="favorite-btn" bindtap="onToggleFavorite">
+      <image class="star-icon" src="{{isFavorited ? '/images/star_filled.png' : '/images/star_outline.png'}}" mode="aspectFit"></image>
+    </view>
+    <!-- 右侧购买按钮 -->
+    <view class="buy-btn" bindtap="onBuyNow">
+      <text class="buy-text">立即购买 ¥{{goodsInfo.price}}</text>
+    </view>
+  </view>
+</view>
+

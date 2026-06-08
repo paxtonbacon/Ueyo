@@ -1,0 +1,99 @@
+/* components/forums_detail/post/post.wxss */
+.waterfall {
+  column-count: 2;
+  column-gap: 15rpx;
+  padding: 24rpx;
+}
+
+.card {
+  break-inside: avoid;
+  margin-bottom: 20rpx;
+  background-color: #ffffff;
+  border-radius: 10rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+
+.card:active {
+  transform: scale(0.98);
+}
+
+.card-image {
+  width: 100%;
+  display: block;
+  background-color: #f0f0f0;
+}
+
+.card-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 20rpx 20rpx 12rpx;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 20rpx 20rpx;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  overflow: hidden;
+}
+
+.user-avatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  margin-right: 16rpx;
+  background-color: #e5e7eb;
+}
+
+.user-name {
+  font-size: 26rpx;
+  color: #6b7280;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.like-btn {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 0 8rpx 16rpx;
+}
+
+.like-icon {
+  width: 40rpx;
+  height: 40rpx;
+  margin-right: 8rpx;
+}
+
+.like-count {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.status-tip {
+  text-align: center;
+  padding: 40rpx 0;
+  font-size: 26rpx;
+  color: #9ca3af;
+}
+
+.load-more-tip {
+  padding: 20rpx 0;
+}

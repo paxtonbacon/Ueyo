@@ -1,0 +1,9 @@
+{
+  "usingComponents": {
+    "tab-container": "/components/tab-container/tab-container",
+    "goods-list": "/components/list/goods-list/goods-list",
+    "reward-list": "/components/list/reward-list/reward-list",
+    "recommend-list": "/components/list/recommend-list/recommend-list"
+  },
+  "navigationStyle": "custom"
+}

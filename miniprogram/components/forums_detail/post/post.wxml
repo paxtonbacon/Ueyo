@@ -1,0 +1,26 @@
+<!--components/forums_detail/post/post.wxml-->
+<view class="waterfall">
+  <view wx:for="{{list}}" wx:key="id" class="card" bindtap="onCardTap" data-id="{{item.id}}">
+    <!-- 图片 -->
+    <image class="card-image" src="{{item.image}}" mode="widthFix" lazy-load></image>
+    <!-- 标题 -->
+    <text class="card-title">{{item.title}}</text>
+    <!-- 底部：用户信息 + 点赞 -->
+    <view class="card-footer">
+      <view class="user-info" catchtap="onUserTap" data-user-id="{{item.userId}}">
+        <image class="user-avatar" src="{{item.userAvatar}}" mode="aspectFill"></image>
+        <text class="user-name">{{item.userName}}</text>
+      </view>
+      <view class="like-btn" catchtap="onLikeTap" data-id="{{item.id}}" data-index="{{index}}">
+        <image class="like-icon" src="{{item.isLiked ? '/images/like_filled.png' : '/images/like_outline.png'}}" mode="aspectFit"></image>
+        <text class="like-count">{{item.likeCount}}</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 加载状态 -->
+<view wx:if="{{loading && list.length === 0}}" class="status-tip">加载中...</view>
+<view wx:elif="{{!hasMore && list.length === 0}}" class="status-tip">暂无内容</view>
+<view wx:elif="{{!hasMore && list.length > 0}}" class="status-tip load-more-tip">没有更多了</view>
+<view wx:elif="{{loading && list.length > 0}}" class="status-tip load-more-tip">加载中...</view>

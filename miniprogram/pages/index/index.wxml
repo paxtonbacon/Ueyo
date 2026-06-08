@@ -1,0 +1,10 @@
+<!--index.wxml-->
+<navigation-bar title="Ueyo" back="{{false}}" color="black" background="#FFF"></navigation-bar>
+<scroll-view class="scrollarea" scroll-y type="list">
+  <view class="container">
+    <image class="hero-image" src="/images/hero.png" mode="aspectFit"></image>
+    <button type="primary" bindtap="goToLogin">登陆</button>
+    <button type="primary" bindtap="goToRegister">注册</button>
+    <button type="primary" bindtap="handleWechatLogin">微信快速登陆</button>
+  </view>
+</scroll-view>

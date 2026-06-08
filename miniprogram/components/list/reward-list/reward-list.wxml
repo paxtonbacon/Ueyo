@@ -1,0 +1,27 @@
+<!--components/reward-list/reward-list.wxml-->
+<view class="reward-grid">
+  <view class="card" wx:for="{{list}}" wx:key="id" bindtap="onCardTap" data-id="{{item.id}}">
+    <!-- 求购标题 -->
+    <text class="card-title">{{item.title}}</text>
+    
+    <!-- 求购描述 -->
+    <text class="card-desc">{{item.desc}}</text>
+    
+    <!-- 价格区间 -->
+    <view class="price-row">
+      <text class="price-range">¥{{item.minPrice}}~{{item.maxPrice}}</text>
+    </view>
+    
+    <!-- 买家信息（点击跳转主页） -->
+    <view class="buyer-row" catchtap="onBuyerTap" data-buyer-id="{{item.buyerId}}">
+      <image class="buyer-avatar" src="{{item.buyerAvatar}}" mode="aspectFill"></image>
+      <text class="buyer-name">{{item.buyerName}}</text>
+    </view>
+  </view>
+</view>
+
+<!-- 加载状态 -->
+<view wx:if="{{loading && list.length === 0}}" class="status-tip">加载中...</view>
+<view wx:elif="{{!hasMore && list.length === 0}}" class="status-tip">暂无悬赏需求</view>
+<view wx:elif="{{!hasMore && list.length > 0}}" class="status-tip load-more-tip">没有更多了</view>
+<view wx:elif="{{loading && list.length > 0}}" class="status-tip load-more-tip">加载中...</view>

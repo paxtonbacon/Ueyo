@@ -1,0 +1,58 @@
+<!--pages/UserRegister/UserRegister.wxml-->
+<navigation-bar title="Ueyo 注册" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+
+<view class="scrollarea">
+  <view class="container">
+    <!-- 主页图片 -->
+    <image class="hero-image" src="/images/hero.png" mode="aspectFit"></image>
+    
+    <!-- 表单区域 -->
+    <view class="form-container">
+      <!-- 农大邮箱输入框 -->
+      <input 
+        class="input-field {{emailError ? 'input-error' : ''}}" 
+        type="text" 
+        placeholder="农大邮箱" 
+        placeholder-class="placeholder-style"
+        bindinput="onEmailInput"
+        value="{{email}}"
+      />
+      
+      <!-- 密码输入框 -->
+      <input 
+        class="input-field {{passwordError ? 'input-error' : ''}}" 
+        type="password" 
+        placeholder="密码" 
+        placeholder-class="placeholder-style"
+        bindinput="onPasswordInput"
+        value="{{password}}"
+      />
+      
+      <!-- 确认密码输入框 -->
+      <input 
+        class="input-field {{confirmPasswordError ? 'input-error' : ''}}" 
+        type="password" 
+        placeholder="确认密码" 
+        placeholder-class="placeholder-style"
+        bindinput="onConfirmPasswordInput"
+        value="{{confirmPassword}}"
+      />
+    </view>
+    
+    <!-- 错误提示区域 -->
+    <view class="error-container" wx:if="{{emailError || passwordError || confirmPasswordError}}">
+      <text class="error-text" wx:if="{{emailError}}">❌ {{emailError}}</text>
+      <text class="error-text" wx:if="{{passwordError}}">❌ {{passwordError}}</text>
+      <text class="error-text" wx:if="{{confirmPasswordError}}">❌ {{confirmPasswordError}}</text>
+    </view>
+    
+    <!-- 注册按钮 -->
+    <button 
+      type="primary" 
+      bindtap="handleRegister" 
+      hover-class="btn-hover"
+      loading="{{isLoading}}"
+      disabled="{{isLoading}}"
+    >{{isLoading ? '注册中...' : '注册'}}</button>
+  </view>
+</view>

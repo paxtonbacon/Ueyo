@@ -1,0 +1,31 @@
+<!--pages/forums/Sets/Sets.wxml-->
+<tab-container 
+  tabs="{{tabs}}"
+  showLeft="{{true}}"
+  isBack="{{false}}"
+  showRight="{{true}}"
+  searchUrl="/pages/search/search"
+  equalWidth="{{true}}"
+  bind:tabchange="onTabChange"
+  bind:refresh="onRefresh"
+  bind:loadmore="onLoadMore"
+>
+
+  <view slot="tab-content-0">
+    <topic 
+      class="topic-component"
+      detailUrl="/pages/topic-detail/topic-detail?id={id}"
+      bind:topicTap="onTopicTap"
+    />
+  </view>
+
+  
+  <view slot="tab-content-1">
+    <post 
+      class="post-component"
+      bind:cardtap="onCardTap" 
+      bind:usertap="onUserTap"
+      bind:like="onLike"
+    />
+  </view>
+</tab-container>

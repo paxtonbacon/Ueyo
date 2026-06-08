@@ -1,0 +1,25 @@
+<!--components/recommend-list/recommend-list.wxml-->
+<view class="goods-grid">
+  <view class="card" wx:for="{{list}}" wx:key="id" bindtap="onCardTap" data-id="{{item.id}}">
+    <!-- 商品图片 -->
+    <image class="card-image" src="{{item.image}}" mode="widthFix" lazy-load></image>
+    <!-- 商品名称 -->
+    <text class="card-title">{{item.title}}</text>
+    <!-- 价格与成新 -->
+    <view class="price-row">
+      <text class="price">¥{{item.price}}</text>
+      <text class="condition">{{item.condition}}成新</text>
+    </view>
+    <!-- 卖家信息：改为 catchtap 阻止冒泡 -->
+    <view class="seller-row" catchtap="onSellerTap" data-seller-id="{{item.sellerId}}">
+      <image class="seller-avatar" src="{{item.sellerAvatar}}" mode="aspectFill"></image>
+      <text class="seller-name">{{item.sellerName}}</text>
+    </view>
+  </view>
+</view>
+
+<!-- 加载更多/无数据状态（仅用于列表为空时显示） -->
+<view wx:if="{{loading && list.length === 0}}" class="status-tip">加载中...</view>
+<view wx:elif="{{!hasMore && list.length === 0}}" class="status-tip">暂无数据</view>
+<view wx:elif="{{!hasMore && list.length > 0}}" class="status-tip load-more-tip">没有更多了</view>
+<view wx:elif="{{loading && list.length > 0}}" class="status-tip load-more-tip">加载中...</view>

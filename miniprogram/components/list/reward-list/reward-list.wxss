@@ -1,0 +1,92 @@
+/* components/reward-list/reward-list.wxss */
+.reward-grid {
+  column-count: 2;
+  column-gap: 10rpx;
+  padding: 24rpx;
+}
+
+.card {
+  break-inside: avoid;
+  margin-bottom: 10rpx;
+  background-color: #fff;
+  border-radius: 10rpx;
+  padding: 28rpx 24rpx 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+}
+/* 其余样式不变 */
+
+.card:active {
+  transform: scale(0.98);
+}
+
+.card-title {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 12rpx;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.card-desc {
+  display: block;
+  font-size: 26rpx;
+  color: #6b7280;
+  margin-bottom: 16rpx;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.price-row {
+  margin-bottom: 20rpx;
+}
+
+.price-range {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #e64340;
+}
+
+.buyer-row {
+  display: flex;
+  align-items: center;
+  padding-top: 8rpx;
+  /* border-top: 1rpx solid #f0f0f0; */
+}
+
+.buyer-avatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  margin-right: 16rpx;
+  background-color: #e5e7eb;
+}
+
+.buyer-name {
+  font-size: 26rpx;
+  color: #6b7280;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-tip {
+  text-align: center;
+  padding: 40rpx 0;
+  font-size: 26rpx;
+  color: #9ca3af;
+}
+
+.load-more-tip {
+  padding: 20rpx 0;
+}

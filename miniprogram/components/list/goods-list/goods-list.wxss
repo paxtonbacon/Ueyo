@@ -1,0 +1,94 @@
+/* components/recommend-list/recommend-list.wxss */
+.goods-grid {
+  column-count: 2;
+  column-gap: 10rpx;
+  padding: 20rpx;
+}
+
+.card {
+  break-inside: avoid;
+  margin-bottom: 10rpx;
+  background-color: #fff;
+  border-radius: 10rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+/* 其余样式不变 */
+
+.card:active {
+  transform: scale(0.98);
+}
+
+.card-image {
+  width: 100%;
+  display: block;
+  background-color: #f0f0f0;
+}
+
+.card-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 20rpx 20rpx 12rpx;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.price-row {
+  display: flex;
+  align-items: baseline;
+  margin: 0 20rpx 12rpx;
+}
+
+.price {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #e64340;
+  margin-right: 16rpx;
+}
+
+.condition {
+  font-size: 24rpx;
+  color: #9ca3af;
+}
+
+.seller-row {
+  display: flex;
+  align-items: center;
+  margin: 0 20rpx 20rpx;
+  padding: 8rpx 0;
+}
+
+.seller-avatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  margin-right: 16rpx;
+  background-color: #e5e7eb;
+}
+
+.seller-name {
+  font-size: 26rpx;
+  color: #6b7280;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-tip {
+  text-align: center;
+  padding: 40rpx 0;
+  font-size: 26rpx;
+  color: #9ca3af;
+}
+
+.load-more-tip {
+  padding: 20rpx 0;
+}

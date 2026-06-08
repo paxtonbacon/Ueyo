@@ -1,0 +1,43 @@
+<!--pages/Home/Home.wxml-->
+<tab-container 
+  tabs="{{tabs}}"
+  showLeft="{{true}}"
+  isBack="{{false}}"
+  showRight="{{true}}"
+  searchUrl="/pages/search/search"
+  equalWidth="{{true}}"
+  bind:tabchange="onTabChange"
+  bind:refresh="onRefresh"
+  bind:loadmore="onLoadMore"
+>
+  <!-- 推荐 Tab 内容（独立子组件） -->
+  <view slot="tab-content-0">
+    <recommend-list 
+      id="recommendList"
+      bind:needRefresh="onRecommendRefresh"
+    />
+  </view>
+
+  <!-- 商品 Tab 内容 -->
+  <view slot="tab-content-1">
+    <goods-list 
+      id="goodsList"
+      bind:needRefresh="onGoodsRefresh"
+    />
+  </view>
+
+  <!-- 悬赏 Tab 内容 -->
+  <view slot="tab-content-2">
+    <reward-list 
+      id="rewardList"
+      bind:needRefresh="onRewardRefresh"
+    />
+  </view>
+
+  <!-- 侧边栏菜单内容 -->
+  <!-- <view slot="sidebar-content">
+    <view class="sidebar-header">菜单</view>
+    <view class="sidebar-item" bindtap="goToProfile">个人资料</view>
+    <view class="sidebar-item" bindtap="goToSettings">设置</view>
+  </view> -->
+</tab-container>

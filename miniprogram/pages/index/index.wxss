@@ -1,0 +1,19 @@
+/**index.wxss**/
+page {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.scrollarea {
+  flex: 1;
+  overflow-y: hidden;
+}
+.hero-image {
+  width: 450rpx;  /* 调大宽度 */
+  height: 450rpx; /* 调大高度 */
+}
+
+button[type="primary"] {
+  margin-top: 48rpx;
+  margin-bottom: 32rpx;
+}

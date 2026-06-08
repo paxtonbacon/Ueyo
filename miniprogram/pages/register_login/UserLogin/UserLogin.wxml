@@ -1,0 +1,47 @@
+<!--pages/UserLogin/UserLogin.wxml-->
+<navigation-bar title="Ueyo 登陆" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+
+<view class="scrollarea">
+  <view class="container">
+    <!-- 主页图片 -->
+    <image class="hero-image" src="/images/hero.png" mode="aspectFit"></image>
+    
+    <!-- 表单区域 -->
+    <view class="form-container">
+      <!-- 农大邮箱输入框 -->
+      <input 
+        class="input-field {{emailError ? 'input-error' : ''}}" 
+        type="text" 
+        placeholder="农大邮箱" 
+        placeholder-class="placeholder-style"
+        bindinput="onEmailInput"
+        value="{{email}}"
+      />
+      
+      <!-- 密码输入框 -->
+      <input 
+        class="input-field {{passwordError ? 'input-error' : ''}}" 
+        type="password" 
+        placeholder="密码" 
+        placeholder-class="placeholder-style"
+        bindinput="onPasswordInput"
+        value="{{password}}"
+      />
+    </view>
+    
+    <!-- 错误提示区域 -->
+    <view class="error-container" wx:if="{{emailError || passwordError}}">
+      <text class="error-text" wx:if="{{emailError}}">❌ {{emailError}}</text>
+      <text class="error-text" wx:if="{{passwordError}}">❌ {{passwordError}}</text>
+    </view>
+    
+    <!-- 登陆按钮 -->
+    <button 
+      type="primary" 
+      bindtap="handleLogin" 
+      hover-class="btn-hover"
+      loading="{{isLoading}}"
+      disabled="{{isLoading}}"
+    >{{isLoading ? '登陆中...' : '登陆'}}</button>
+  </view>
+</view>

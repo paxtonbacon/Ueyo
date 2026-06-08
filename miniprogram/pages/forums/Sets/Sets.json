@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "tab-container": "/components/tab-container/tab-container",
+    "topic": "/components/forums_detail/topic/topic",
+    "post": "/components/forums_detail/post/post"
+  }
+}
