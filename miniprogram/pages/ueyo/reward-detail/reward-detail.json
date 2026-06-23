@@ -1,0 +1,7 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "reward-list": "/components/list/reward-list/reward-list",
+    "comment-section": "/components/comments/comments"
+  }
+}

@@ -52,20 +52,19 @@ Component({
           const list = [];
           const start = (page - 1) * pageSize;
           
-          // 商品相关随机库
           const goodsTitles = ['复古运动鞋', '简约双肩包', '纯棉T恤', '牛仔裤', '棒球帽', '帆布鞋', '卫衣', '休闲裤', '手表', '太阳镜'];
-          // 悬赏相关随机库
           const rewardTitles = ['求购二手自行车', '收一台笔记本电脑', '求租校园卡', '买考研资料', '收iPhone12', '求购电动车', '收购旧书', '求带饭卡'];
           const rewardDescs = ['八九成新即可', '预算充足，要求无修', '长期使用，诚信求租', '全套笔记最好', '原装无拆修', '续航好', '教材教辅', '价格好商量'];
           
           for (let i = 1; i <= pageSize; i++) {
             const id = start + i;
-            // 随机决定类型：0商品 1悬赏（约各半）
             const isGoods = Math.random() > 0.5;
             
+            // 随机图片（商品和悬赏都用同一来源）
+            const imgId = Math.floor(Math.random() * 200);
+            const image = `https://picsum.photos/300/200?random=${imgId}`;
+            
             if (isGoods) {
-              const imgId = Math.floor(Math.random() * 200);
-              const image = `https://picsum.photos/300/200?random=${imgId}`;
               const title = `${goodsTitles[id % goodsTitles.length]}`;
               const price = (Math.random() * 470 + 30).toFixed(0);
               const condition = (Math.random() * 4 + 6).toFixed(1);
@@ -78,7 +77,7 @@ Component({
               list.push({
                 type: 'goods',
                 id,
-                image,
+                image,          // 商品图片
                 title,
                 price,
                 condition,
@@ -100,6 +99,7 @@ Component({
               list.push({
                 type: 'reward',
                 id,
+                image,          // 悬赏也添加图片
                 title,
                 desc,
                 minPrice,
@@ -133,7 +133,6 @@ Component({
 
     onCardTap(e) {
       const { id, type } = e.currentTarget.dataset;
-      // console.log(type)
       if (type === 'goods') {
         wx.navigateTo({
           url: `/pages/ueyo/goods-detail/goods-detail?id=${id}`,
@@ -141,7 +140,7 @@ Component({
         });
       } else {
         wx.navigateTo({
-          url: `/pages/reward/detail/detail?id=${id}`,
+          url: `/pages/ueyo/reward-detail/reward-detail?id=${id}`,
           fail: () => wx.showToast({ title: '悬赏详情页开发中', icon: 'none' })
         });
       }

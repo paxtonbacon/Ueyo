@@ -1,0 +1,50 @@
+<!--pages/self/Favorites/Favorites.wxml-->
+<navigation-bar title="收藏" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+
+<tab-container-no-space
+  tabs="{{tabs}}"
+  showLeft="{{false}}"
+  isBack="{{false}}"
+  showRight="{{false}}"
+  searchUrl="/pages/search/search"
+  equalWidth="{{true}}"
+  bind:tabchange="onTabChange"
+  bind:refresh="onRefresh"
+  bind:loadmore="onLoadMore"
+>
+  <!-- 商品浏览记录 -->
+  <view slot="tab-content-0">
+    <goods-list 
+      id="goodsList"
+      type="goods"
+      bind:needRefresh="onGoodsRefresh"
+    />
+  </view>
+
+  <!-- 悬赏浏览记录 -->
+  <view slot="tab-content-1">
+    <reward-list 
+      id="rewardList"
+      bind:needRefresh="onRewardRefresh"
+    />
+  </view>
+
+  <!-- 帖子浏览记录 -->
+  <view slot="tab-content-2">
+    <post 
+      class="post-component"
+      bind:cardtap="onCardTap" 
+      bind:usertap="onUserTap"
+      bind:like="onLike"
+    />
+  </view>
+
+  <!-- 话题浏览记录 -->
+  <view slot="tab-content-3">
+    <topic 
+      class="topic-component"
+      detailUrl="/pages/topic-detail/topic-detail?id={id}"
+      bind:topicTap="onTopicTap"
+    />
+  </view>
+</tab-container-no-space>

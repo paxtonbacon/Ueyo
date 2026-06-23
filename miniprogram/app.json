@@ -6,21 +6,47 @@
     "pages/register_login/UserLogin/UserLogin",
     "pages/register_login/Email_Val/EmailVal",
     "pages/forums/Sets/Sets",
+    "pages/forums/Topic_products/Topic_products",
     "pages/add/Select/Select",
     "pages/message/People/People",
     "pages/self/Myself/Myself",
     "components/tab-container/tab-container",
+    "components/tab-container-no-space/tab-container-no-space",
     "components/list/goods-list/goods-list",
     "components/list/reward-list/reward-list",
     "components/list/recommend-list/recommend-list",
-    "pages/ueyo/goods-detail/goods-detail"
+    "pages/ueyo/goods-detail/goods-detail",
+    "pages/message/Message_detail/Message_detail",
+    "pages/ueyo/reward-detail/reward-detail",
+    "components/forums_detail/post_sets/post_sets",
+    "components/forums_detail/post/post",
+    "components/forums_detail/topic/topic",
+    "pages/forums/Post_detail/Post_detail",
+    "components/comments/comments",
+    "pages/add/Post_add/Post_add",
+    "pages/add/Goods_add/Goods_add",
+    "pages/add/Reward_add/Reward_add",
+    "pages/add/Topic_add/Topic_add",
+    "pages/self/Person_setting/Person_setting",
+    "pages/self/Setting/Setting",
+    "pages/self/History/History",
+    "pages/self/Favorites/Favorites",
+    "pages/self/Order/Order",
+    "pages/self/Publication/Publication",
+    "components/publication_detail/goods/1haven_pub/1haven_pub",
+    "components/publication_detail/goods/2waited_for_del/2waited_for_del",
+    "components/publication_detail/goods/3waited_for_dis/3waited_for_dis",
+    "components/publication_detail/goods/4all_down/4all_down",
+    "components/publication_detail/rewards/1haven_pub/1haven_pub",
+    "components/publication_detail/rewards/2waited_for_dis/2waited_for_dis",
+    "components/publication_detail/rewards/3all_down/3all_down"
   ],
   "window": {
     "navigationBarTextStyle": "black",
     "navigationStyle": "custom"
   },
   "style": "v2",
-  "renderer": "skyline",
+  "renderer": "webview",
   "rendererOptions": {
     "skyline": {
       "defaultDisplayBlock": true,
@@ -43,31 +69,31 @@
       {
         "pagePath": "pages/ueyo/Home/Home",
         "text": "有哟!",
-        "iconPath": "images/tabbar/home_selected.png",
+        "iconPath": "images/tabbar/home.png",
         "selectedIconPath": "images/tabbar/home_selected.png"
       },
       {
         "pagePath": "pages/forums/Sets/Sets",
         "text": "论坛",
-        "iconPath": "images/tabbar/forums_selected.png",
+        "iconPath": "images/tabbar/forums.png",
         "selectedIconPath": "images/tabbar/forums_selected.png"
       },
       {
         "pagePath": "pages/add/Select/Select",
         "text": "添加",
         "iconPath": "images/tabbar/add.png",
-        "selectedIconPath": "images/tabbar/add.png"
+        "selectedIconPath": "images/tabbar/add_selected.png"
       },
       {
         "pagePath": "pages/message/People/People",
         "text": "消息",
-        "iconPath": "images/tabbar/message_selected.png",
+        "iconPath": "images/tabbar/message.png",
         "selectedIconPath": "images/tabbar/message_selected.png"
       },
       {
         "pagePath": "pages/self/Myself/Myself",
         "text": "我的",
-        "iconPath": "images/tabbar/profile_selected.png",
+        "iconPath": "images/tabbar/profile.png",
         "selectedIconPath": "images/tabbar/profile_selected.png"
       }
     ]

@@ -1,0 +1,55 @@
+<!-- components/forums_detail/post_sets/post_sets.wxml -->
+<view class="topic-header">
+  <view class="topic-title">{{topicInfo.title}}</view>
+  <view class="topic-desc">{{topicInfo.desc}}</view>
+  <view class="topic-admin">
+    <image class="admin-avatar" src="{{topicInfo.adminAvatar}}" mode="aspectFill"></image>
+    <text class="admin-name">{{topicInfo.adminName}}</text>
+  </view>
+</view>
+
+<view class="post-list">
+  <view wx:for="{{list}}" wx:key="id" class="post-card" bindtap="onCardTap" data-id="{{item.id}}">
+    <!-- 用户信息行 -->
+    <view class="post-user">
+      <image class="user-avatar" src="{{item.userAvatar}}" mode="aspectFill"></image>
+      <view class="user-info">
+        <text class="user-name">{{item.userName}}</text>
+        <text class="post-time">{{item.postTime}}</text>
+      </view>
+    </view>
+
+    <!-- 帖子标题 -->
+    <text class="post-title">{{item.title}}</text>
+
+    <!-- 帖子内容 -->
+    <text class="post-content">{{item.content}}</text>
+
+    <!-- 图片区域（一行三张，可滑动） -->
+    <scroll-view class="image-scroll" scroll-x enhanced show-scrollbar="{{false}}" wx:if="{{item.images && item.images.length > 0}}">
+      <view class="image-row">
+        <view wx:for="{{item.images}}" wx:key="index" class="image-item" bindtap="onImageTap" data-img="{{item}}">
+          <image class="post-image" src="{{item}}" mode="aspectFill"></image>
+        </view>
+      </view>
+    </scroll-view>
+
+    <!-- 底部操作栏（右下角） -->
+    <view class="post-actions">
+      <view class="action-btn" catchtap="onLike" data-id="{{item.id}}" data-index="{{index}}">
+        <image class="action-icon" src="{{item.isLiked ? '/images/like_filled.png' : '/images/like_outline.png'}}" mode="aspectFit"></image>
+        <text class="action-count">{{item.likeCount}}</text>
+      </view>
+      <view class="action-btn" catchtap="onComment" data-id="{{item.id}}">
+        <image class="action-icon" src="/images/comments.png" mode="aspectFit"></image>
+        <text class="action-count">{{item.commentCount}}</text>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 加载状态 -->
+<view wx:if="{{loading && list.length === 0}}" class="status-tip">加载中...</view>
+<view wx:elif="{{!hasMore && list.length === 0}}" class="status-tip">暂无帖子</view>
+<view wx:elif="{{!hasMore && list.length > 0}}" class="status-tip load-more-tip">没有更多了</view>
+<view wx:elif="{{loading && list.length > 0}}" class="status-tip load-more-tip">加载中...</view>

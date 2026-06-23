@@ -1,0 +1,93 @@
+<!--pages/self/Publication/Publication.wxml-->
+<tab-container
+  tabs="{{outerTabs}}"
+  showLeft="{{true}}"
+  isBack="{{true}}"
+  showRight="{{false}}"
+  equalWidth="{{true}}"
+  bind:tabchange="onOuterTabChange"
+>
+  <!-- 商品发表 -->
+  <view slot="tab-content-0">
+    <tab-container-no-space
+      tabs="{{goodsTabs}}"
+      showLeft="{{false}}"
+      showRight="{{false}}"
+      current="{{innerCurrents[0]}}"
+      equalWidth="{{true}}"
+      bind:tabchange="onInnerTabChange"
+      data-outer="0"
+    >
+      <!-- 已发布 -->
+      <view slot="tab-content-0">
+        <goods_1 
+          list="{{goods_pub_list}}"
+          bind:shelve="onGoodsShelve"
+          bind:manage="onGoodsManage"
+        />
+      </view>
+      <!-- 待发货 -->
+      <view slot="tab-content-1">
+        <goods_2 
+          list="{{goods_delivery_list}}"
+          bind:shelve="onGoodsShelve"
+          bind:manage="onGoodsManage"
+        />
+      </view>
+      <!-- 待评价 -->
+      <view slot="tab-content-2">
+        <goods_3 
+          list="{{goods_evaluate_list}}"
+          bind:shelve="onGoodsShelve"
+          bind:manage="onGoodsManage"
+        />
+      </view>
+      <!-- 已完成 -->
+      <view slot="tab-content-3">
+        <goods_4 
+          list="{{goods_complete_list}}"
+          bind:shelve="onGoodsShelve"
+          bind:manage="onGoodsManage"
+        />
+      </view>
+    </tab-container-no-space>
+  </view>
+
+  <!-- 悬赏发表 -->
+  <view slot="tab-content-1">
+    <tab-container-no-space
+      tabs="{{rewardsTabs}}"
+      showLeft="{{false}}"
+      showRight="{{false}}"
+      current="{{innerCurrents[1]}}"
+      equalWidth="{{true}}"
+      bind:tabchange="onInnerTabChange"
+      data-outer="1"
+    >
+      <!-- 待揭榜 -->
+      <view slot="tab-content-0">
+        <rewards_1 
+          list="{{rewards_pub_list}}"
+          bind:accept="onRewardAccept"
+          bind:manage="onRewardManage"
+        />
+      </view>
+      <!-- 待评价 -->
+      <view slot="tab-content-1">
+        <rewards_2 
+          list="{{rewards_evaluate_list}}"
+          bind:accept="onRewardAccept"
+          bind:manage="onRewardManage"
+        />
+      </view>
+      <!-- 已完成 -->
+      <view slot="tab-content-2">
+        <rewards_3 
+          list="{{rewards_complete_list}}"
+          bind:accept="onRewardAccept"
+          bind:manage="onRewardManage"
+        />
+      </view>
+    </tab-container-no-space>
+  </view>
+</tab-container>

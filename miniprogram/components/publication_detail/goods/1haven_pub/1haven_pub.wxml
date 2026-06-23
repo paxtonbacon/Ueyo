@@ -1,0 +1,29 @@
+<!--components/publication_detail/goods/1haven_pub/1haven_pub.wxml-->
+<view class="haven-pub">
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <!-- 左侧图片 -->
+    <image class="card-img" src="{{item.image || '/images/default-goods.png'}}" mode="aspectFill"></image>
+    <!-- 右侧内容 -->
+    <view class="card-content">
+      <!-- 第一行：名称 + 价格 -->
+      <view class="card-header">
+        <text class="goods-name">{{item.name}}</text>
+        <text class="goods-price">¥{{item.price}}</text>
+      </view>
+      <!-- 第二行：新旧程度、交易方式 -->
+      <view class="goods-meta">
+        <text class="meta-item">{{item.condition}}成新</text>
+        <text class="meta-item">{{item.tradeType}}</text>
+      </view>
+      <!-- 底部按钮 -->
+      <view class="card-footer">
+        <button class="btn btn-shelve" bindtap="onShelve" data-id="{{item.id}}">下架</button>
+        <button class="btn btn-manage" bindtap="onManage" data-id="{{item.id}}">管理</button>
+      </view>
+    </view>
+  </view>
+  <!-- 空状态 -->
+  <view wx:if="{{list.length === 0}}" class="empty-state">
+    <text>暂无已发布的商品</text>
+  </view>
+</view>

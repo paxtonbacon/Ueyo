@@ -1,0 +1,53 @@
+<!--pages/add/Topic_add/Topic_add.wxml-->
+<!--pages/add/Topic_add/Topic_add.wxml-->
+<navigation-bar title="话题发布" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+
+<scroll-view class="page" scroll-y enhanced show-scrollbar="{{false}}">
+
+  <!-- 白色卡片：标题（单行） -->
+  <view class="title-card">
+    <input 
+      class="title-input" 
+      placeholder="标题，4-20字" 
+      placeholder-class="placeholder"
+      maxlength="20"
+      bindinput="onTitleInput"
+      value="{{title}}"
+    />
+    <text class="char-count title-count">{{title.length}}/20</text>
+  </view>
+
+  <!-- 米白色卡片：图片 + 话题简介（一体化） -->
+  <view class="content-card">
+    <!-- 图片上传区 -->
+    <view class="upload-area">
+      <view class="image-list">
+        <view class="image-item" wx:for="{{imageList}}" wx:key="index">
+          <image class="uploaded-img" src="{{item}}" mode="aspectFill"></image>
+          <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">×</view>
+        </view>
+        <view class="add-btn" wx:if="{{imageList.length < 9}}" bindtap="chooseImage">
+          <text class="add-icon">+</text>
+        </view>
+      </view>
+      <text class="upload-tip">最多上传9张图片</text>
+    </view>
+
+    <!-- 话题简介（直接跟在图片下方） -->
+    <textarea 
+      class="intro-input" 
+      placeholder="简单介绍一下这个话题..." 
+      placeholder-class="placeholder"
+      maxlength="200"
+      bindinput="onIntroInput"
+      value="{{introduction}}"
+    ></textarea>
+    <text class="char-count intro-count">{{introduction.length}}/200</text>
+  </view>
+
+  <!-- 发布按钮（在卡片外部） -->
+  <view class="publish-btn" bindtap="onPublish">
+    <text class="publish-text">发布话题</text>
+  </view>
+
+</scroll-view>

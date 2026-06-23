@@ -1,0 +1,211 @@
+/* pages/message/Message_detail.wxss */
+page {
+  background-color: #f5f5f5;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+  /* 覆盖全局的 padding、对齐方式 */
+  padding: 0;                   /* 清除上下内边距 */
+  justify-content: flex-start; /* 改为从顶部开始排列，而不是 space-between */
+  align-items: stretch;        /* 让子元素宽度自然填满（默认值） */
+}
+
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  z-index: 100;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.nav-bar-inner {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+/* 左侧区域：返回按钮 + 用户信息 */
+.nav-left {
+  display: flex;
+  align-items: center;
+  margin-left: 16rpx;
+}
+
+.back-btn {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.back-icon {
+  width: 40rpx;
+  height: 40rpx;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-left: 8rpx;
+}
+
+.user-avatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background-color: #e5e7eb;
+  margin-right: 16rpx;
+}
+
+.user-name {
+  font-size: 28rpx;
+  color: #1f2937;
+  font-weight: 500;
+  max-width: 200rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-center {
+  flex: 1;
+}
+
+.nav-right {
+  margin-right: 24rpx;
+}
+
+/* 聊天滚动区域 */
+.chat-scroll {
+  flex: 1;
+  padding: 20rpx 30rpx;
+  box-sizing: border-box;
+}
+.message-list {
+  display: flex;
+  flex-direction: column;
+}
+.message-item {
+  display: flex;
+  margin-bottom: 30rpx;
+  align-items: flex-start;
+}
+.message-item.left {
+  justify-content: flex-start;
+}
+.message-item.right {
+  justify-content: flex-end;
+}
+.msg-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 12rpx;
+  background-color: #e0e0e0;
+  flex-shrink: 0;
+}
+.left .msg-avatar {
+  margin-right: 20rpx;
+}
+.right .msg-avatar {
+  margin-left: 20rpx;
+}
+.msg-bubble {
+  max-width: 500rpx;
+  padding: 20rpx 30rpx;
+  border-radius: 20rpx;
+  font-size: 32rpx;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+.left-bubble {
+  background-color: #fff;
+  color: #000;
+  border-top-left-radius: 8rpx;
+}
+.right-bubble {
+  /* background-color: #95ec69; */
+  background-color: #c8d45a;
+  color: #000;
+  border-top-right-radius: 8rpx;
+}
+
+/* 底部输入栏 */
+.input-bar {
+  display: flex;
+  width: 100%;
+  /* align-items: center; */
+  padding: 20rpx 30rpx;
+  background-color: #fff;
+  border-top: 1rpx solid #e5e5e5;
+  box-sizing: border-box;
+}
+.input-field {
+  flex: 1;
+  height: 72rpx;
+  /* width: 100%; */
+  background-color: #f5f5f5;
+  border-radius: 36rpx;
+  padding: 0 30rpx;
+  font-size: 30rpx;
+}
+.plus-btn {
+  width: 80rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  font-size: 48rpx;
+  font-weight: 300;
+  color: #7f7f7f;
+  margin-left: 20rpx;
+  background-color: #f5f5f5;
+  border-radius: 36rpx;
+}
+
+/* 加号弹出层 */
+.plus-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0,0,0,0.4);
+  z-index: 20;
+}
+.panel-content {
+  position: absolute;
+  bottom: 120rpx;
+  right: 30rpx;
+  background-color: #fff;
+  border-radius: 20rpx;
+  padding: 20rpx;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.2);
+}
+.panel-item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+.panel-item:last-child {
+  border-bottom: none;
+}
+.panel-item .icon {
+  font-size: 40rpx;
+  margin-right: 20rpx;
+}
+.panel-item text {
+  font-size: 32rpx;
+  color: #000;
+}

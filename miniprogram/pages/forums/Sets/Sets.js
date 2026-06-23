@@ -70,16 +70,21 @@ Page({
 
   // 话题点击（topic 组件内部已跳转，此处仅做埋点）
   onTopicTap(e) {
-    const { topic } = e.detail;
+    const { topic } = e.detail;     // 假设 e.detail = { topic: { id: 'xxx', name: '...' } }
+    const id = topic.id;            // 或者直接 const { id } = topic
     console.log('点击话题:', topic);
-    wx.showToast({ title: '话题页面待开发', icon: 'none' });
+    wx.navigateTo({
+      url: `/pages/forums/Topic_products/Topic_products?id=${id}&title=${topic.name}`
+    });
+    // 可以取消下面的 toast 或仅作为 fallback
+    // wx.showToast({ title: '话题页面待开发', icon: 'none' });
   },
 
   // 帖子卡片点击
   onCardTap(e) {
     const { id } = e.detail;        // 修正：子组件传的是 { id }
     wx.navigateTo({
-      url: `/pages/post-detail/post-detail?id=${id}`
+      url: `/pages/forums/Post_detail/Post_detail?id=${id}`
     });
   },
 

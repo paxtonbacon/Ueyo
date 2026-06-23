@@ -1,0 +1,37 @@
+/* pages/forums/Topic_products/Topic_products.wxss */
+/* pages/forums/Topic_products/Topic_products.wxss */
+.page {
+  height: 100%;
+  width: 100%;
+  position: relative;
+  background-color: #f5f5f5;
+}
+
+/* 悬浮球区域 */
+.fab-area {
+  position: fixed;
+  right: 30rpx;
+  bottom: 80rpx;
+  width: 100rpx;
+  height: 100rpx;
+  z-index: 999;
+}
+
+.fab {
+  width: 100rpx;
+  height: 100rpx;
+  background-color: #07c160;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.15);
+  color: white;
+  font-size: 60rpx;
+  font-weight: bold;
+}
+
+.fab-icon {
+  line-height: 1;
+  margin-top: -6rpx;
+}

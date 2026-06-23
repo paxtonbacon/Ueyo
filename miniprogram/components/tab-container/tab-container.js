@@ -42,7 +42,7 @@ Component({
   },
   data: {
     statusBarHeight: 20,
-    swiperHeight: 0,
+    // swiperHeight: 0,
     currentTab: 0,
     scrollTops: [],          // 每个 Tab 的滚动位置
     refreshTriggered: [],    // 每个 Tab 的下拉刷新状态
@@ -52,17 +52,17 @@ Component({
   lifetimes: {
     attached() {
       this.initNavBar();
-      this.initSwiperHeight();
+      // this.initSwiperHeight();
       this.initScrollTops();
       // 监听窗口尺寸变化
       wx.onWindowResize((res) => {
         this.initNavBar();      // 状态栏高度可能变化（如折叠屏）
-        this.initSwiperHeight();
+        // this.initSwiperHeight();
       });
     },
     detached() {
       // 确保在组件完全渲染后再次计算（防止某些机型延迟）
-      this.initSwiperHeight();
+      // this.initSwiperHeight();
       wx.offWindowResize();
     }
   },
@@ -89,7 +89,7 @@ Component({
       
       // 获取右侧胶囊位置，用于计算右边距（规避胶囊）
       const menuRect = wx.getMenuButtonBoundingClientRect();
-      const rightMargin = sysInfo.windowWidth - menuRect.left;
+      const rightMargin = sysInfo.windowWidth - menuRect.left + 80;
       // console.log(rightMargin)
       
       this.setData({
@@ -99,12 +99,12 @@ Component({
       });
     },
     
-    initSwiperHeight() {
-      const sysInfo = wx.getSystemInfoSync();
-      const windowHeight = sysInfo.windowHeight; // 已自动排除原生 tabBar 高度
-      const swiperHeight = windowHeight - this.data.navTotalHeight;
-      this.setData({ swiperHeight });
-    },
+    // initSwiperHeight() {
+    //   const sysInfo = wx.getSystemInfoSync();
+    //   const windowHeight = sysInfo.windowHeight; // 已自动排除原生 tabBar 高度
+    //   const swiperHeight = windowHeight - this.data.navTotalHeight;
+    //   this.setData({ swiperHeight });
+    // },
     // 初始化滚动位置数组和刷新状态数组
     initScrollTops() {
       const len = this.properties.tabs.length;
@@ -130,11 +130,14 @@ Component({
     },
     // 记录滚动位置
     onScroll(e) {
-      const tabIndex = e.currentTarget.dataset.tab;
-      const scrollTop = e.detail.scrollTop;
-      const newScrollTops = [...this.data.scrollTops];
-      newScrollTops[tabIndex] = scrollTop;
-      this.setData({ scrollTops: newScrollTops });
+      if (this.scrollTimer) clearTimeout(this.scrollTimer);
+      this.scrollTimer = setTimeout(() => {
+        const tabIndex = e.currentTarget.dataset.tab;
+        const scrollTop = e.detail.scrollTop;
+        const newScrollTops = [...this.data.scrollTops];
+        newScrollTops[tabIndex] = scrollTop;
+        this.setData({ scrollTops: newScrollTops });
+      }, 150); // 滚动停止 150ms 后记录
     },
     // 上拉加载更多
     onLoadMore(e) {

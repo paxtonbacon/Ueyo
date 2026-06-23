@@ -32,20 +32,24 @@
   padding-left: var(--left);
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;        /* 垂直居中对齐 */
   height: 100%;
   box-sizing: border-box;
 }
 
 .weui-navigation-bar__btn_goback_wrapper {
-  padding: 11px 18px 11px 16px;
-  margin: -11px -18px -11px -16px;
+  padding: 8px 12px;
+  margin: 0;                  /* 取消负边距 */
+  border-radius: 4px;         /* 可选，增加圆角 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* 保持 hover 效果 */
 .weui-navigation-bar__btn_goback_wrapper.weui-active {
   opacity: 0.5;
 }
-
 .weui-navigation-bar__btn_goback {
   font-size: 12px;
   width: 12px;

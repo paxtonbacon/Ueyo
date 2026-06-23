@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "tab-container": "/components/tab-container/tab-container",
+    "goods-list": "/components/list/goods-list/goods-list",
+    "post-sets": "/components/forums_detail/post_sets/post_sets"
+  }
+}

@@ -1,0 +1,50 @@
+<!-- pages/self/Order/Order.wxml -->
+<!-- <navigation-bar title="订单" back="{{true}}" color="black" background="#FFF"></navigation-bar> -->
+
+<!-- 外层：订单类型 -->
+<tab-container
+  tabs="{{outerTabs}}"
+  showLeft="{{true}}"
+  isBack="{{true}}"
+  showRight="{{false}}"
+  equalWidth="{{true}}"
+  bind:tabchange="onOuterTabChange"
+>
+  <!-- 商品订单 -->
+  <view slot="tab-content-0">
+    <tab-container-no-space
+      tabs="{{goodsTabs}}"
+      showLeft="{{false}}"
+      showRight="{{false}}"
+      current="{{innerCurrents[0]}}"
+      equalWidth="{{true}}"
+      bind:tabchange="onInnerTabChange"
+      data-outer="0"
+    >
+      <view slot="tab-content-0">商品-全部订单列表</view>
+      <view slot="tab-content-1">商品-待付款订单列表</view>
+      <view slot="tab-content-2">商品-待发货订单列表</view>
+      <view slot="tab-content-3">商品-待收货订单列表</view>
+      <view slot="tab-content-4">商品-已完成订单列表</view>
+    </tab-container-no-space>
+  </view>
+
+  <!-- 悬赏订单 -->
+  <view slot="tab-content-1">
+    <tab-container-no-space
+      tabs="{{rewardsTabs}}"
+      showLeft="{{false}}"
+      showRight="{{false}}"
+      current="{{innerCurrents[1]}}"
+      equalWidth="{{true}}"
+      bind:tabchange="onInnerTabChange"
+      data-outer="1"
+    >
+      <view slot="tab-content-0">悬赏-全部订单列表</view>
+      <view slot="tab-content-1">悬赏-待付款订单列表</view>
+      <view slot="tab-content-2">悬赏-待发货订单列表</view>
+      <view slot="tab-content-3">悬赏-待收货订单列表</view>
+      <view slot="tab-content-4">悬赏-已完成订单列表</view>
+    </tab-container-no-space>
+  </view>
+</tab-container>

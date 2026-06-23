@@ -1,2 +1,110 @@
 <!--pages/self/Myself/Myself.wxml-->
-<text>pages/self/Myself/Myself.wxml</text>
+<!-- 顶部留白 + 设置按钮 -->
+<view class="top-blank">
+  <view class="settings-btn" bindtap="goToSettings">
+    <image class="icon" src="/images/setting.png" mode="aspectFit"></image>
+  </view>
+</view>
+
+<!-- 登录区域 -->
+<view class="login-section">
+  <view class="avatar-placeholder"></view>
+  <view class="login-info">
+    <text class="login-btn" bindtap="onTapLogin">登陆/注册</text>
+    <text class="user-tag">未知买家，未知卖家</text>
+  </view>
+</view>
+
+<!-- 四个入口 -->
+<view class="stats-row">
+  <view class="stat-item" bindtap="goToMyPosts">
+    <text class="stat-num">我的发表</text>
+  </view>
+  <view class="stat-item" bindtap="goToOrders">
+    <text class="stat-num">订单</text>
+  </view>
+  <view class="stat-item" bindtap="goToFavorites">
+    <text class="stat-num">收藏</text>
+  </view>
+  <view class="stat-item" bindtap="goToHistory">
+    <text class="stat-num">浏览记录</text>
+  </view>
+</view>
+
+<!-- ========== 数据统计模块 ========== -->
+
+<!-- 模块1：近7天活跃趋势 -->
+<view class="stats-card">
+  <view class="card-header">
+    <text class="card-title"> 近7天活跃趋势</text>
+    <view class="trend-badge" wx:if="{{weeklyTrend > 0}}">
+      <text class="trend-up">↑ {{weeklyTrend}}%</text>
+    </view>
+  </view>
+  <canvas type="2d" id="trendChart" style="width: 100%; height: 340rpx;"></canvas>
+  <view class="chart-labels">
+    <text wx:for="{{weekDays}}" wx:key="index" class="label">{{item}}</text>
+  </view>
+</view>
+
+<!-- 模块2：GitHub 风格热力图 -->
+<view class="stats-card">
+  <view class="card-header">
+    <text class="card-title"> 活跃热力图</text>
+    <text class="card-sub">近2个月活跃记录</text>
+  </view>
+  
+  <!-- 月份标题行 -->
+  <view class="heatmap-months">
+    <view class="month-spacer"></view>
+    <view class="month-cells">
+      <view 
+        wx:for="{{monthColumns}}" 
+        wx:key="index" 
+        class="month-cell {{item.show ? '' : 'hidden'}}"
+        style="width: 40rpx;"
+      >{{item.name}}</view>
+    </view>
+  </view>
+  
+  <!-- 热力图主体（7行） -->
+  <view class="heatmap-body">
+    <view class="heatmap-row" wx:for="{{heatmapData}}" wx:key="rowIndex" wx:for-item="row" wx:for-index="rowIndex">
+      <view class="weekday-label">{{weekLabels[rowIndex]}}</view>
+      <view class="heatmap-cells">
+        <view 
+          class="heatmap-cell level-{{cell.level}}"
+          wx:for="{{row}}" 
+          wx:for-item="cell"
+          wx:key="colIndex"
+          bindtap="onTapCell"
+          data-date="{{cell.date}}"
+          data-count="{{cell.count}}"
+        ></view>
+      </view>
+    </view>
+  </view>
+  
+  <!-- 图例 -->
+  <view class="heatmap-legend">
+    <text class="legend-label">少</text>
+    <view class="legend-cell level-0"></view>
+    <view class="legend-cell level-1"></view>
+    <view class="legend-cell level-2"></view>
+    <view class="legend-cell level-3"></view>
+    <view class="legend-cell level-4"></view>
+    <text class="legend-label">多</text>
+  </view>
+</view>
+
+<!-- 模块3：数据汇总 -->
+<view class="stats-summary">
+  <view class="summary-item" wx:for="{{summaryData}}" wx:key="index">
+    <view class="summary-icon-wrap">
+      <text class="summary-icon">{{item.icon}}</text>
+    </view>
+    <text class="summary-value">{{item.value}}</text>
+    <text class="summary-label">{{item.label}}</text>
+  </view>
+</view>
+

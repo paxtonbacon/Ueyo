@@ -1,0 +1,67 @@
+<!--pages/self/Setting/Setting.wxml-->
+<!--pages/index/index.wxml-->
+<view class="page">
+  <navigation-bar title="个人设置" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+
+  <view class="content">
+    <!-- 个人信息卡片 -->
+    <view class="info-card">
+      <!-- 可编辑昵称 -->
+      <view class="info-item" bindtap="editNickname">
+        <text class="info-label">昵称</text>
+        <view class="info-right">
+          <text class="info-value">{{nickname}}</text>
+          <text class="arrow">></text>
+        </view>
+      </view>
+      <!-- 可编辑性别 -->
+      <view class="info-item" bindtap="editGender">
+        <text class="info-label">性别</text>
+        <view class="info-right">
+          <text class="info-value">{{genderText}}</text>
+          <text class="arrow">></text>
+        </view>
+      </view>
+      <!-- 可编辑常用面交点 -->
+      <view class="info-item" bindtap="editMeetingPoint">
+        <text class="info-label">常用面交点</text>
+        <view class="info-right">
+          <text class="info-value">{{meetingPoint}}</text>
+          <text class="arrow">></text>
+        </view>
+      </view>
+      <!-- 注册时间（只读展示） -->
+      <view class="info-item">
+        <text class="info-label">注册时间</text>
+        <view class="info-right">
+          <text class="info-value">{{registerTime}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 设置卡片：消息提示 & 个性化推荐（开关按钮） -->
+    <view class="settings-card">
+      <view class="switch-item">
+        <text class="switch-label">消息提示</text>
+        <switch 
+          checked="{{msgSwitch}}" 
+          bindchange="onMsgSwitchChange"
+          color="#07c160"
+        />
+      </view>
+      <view class="switch-item">
+        <text class="switch-label">个性化推荐</text>
+        <switch 
+          checked="{{recSwitch}}" 
+          bindchange="onRecSwitchChange"
+          color="#07c160"
+        />
+      </view>
+    </view>
+
+    <!-- 退出登录按钮 -->
+    <view class="logout-btn" bindtap="onLogoutTap">
+      <text>退出登录</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,10 @@
+{
+  "usingComponents": {
+    "navigation-bar": "/components/navigation-bar/navigation-bar",
+    "tab-container-no-space": "/components/tab-container-no-space/tab-container-no-space",
+    "goods-list": "/components/list/goods-list/goods-list",
+    "reward-list": "/components/list/reward-list/reward-list",
+    "post": "/components/forums_detail/post/post",
+    "topic": "/components/forums_detail/topic/topic"
+  }
+}

@@ -1,0 +1,32 @@
+<!--pages/forums/Topic_products/Topic_products.wxml-->
+<!--pages/forums/Topic_products/Topic_products.wxml-->
+<view class="page">
+  <tab-container 
+    tabs="{{tabs}}"
+    showLeft="{{true}}"
+    isBack="{{true}}"
+    showRight="{{true}}"
+    searchUrl="/pages/search/search"
+    equalWidth="{{true}}"
+    bind:tabchange="onTabChange"
+    bind:refresh="onRefresh"
+    bind:loadmore="onLoadMore"
+  >
+    <!-- 话题 Tab 内容 -->
+    <view slot="tab-content-0">
+      <post-sets id="postSets" topicId="{{topicId}}" />
+    </view>
+
+    <!-- 商品 Tab 内容 -->
+    <view slot="tab-content-1">
+      <goods-list id="goodsList" type="goods" />
+    </view>
+  </tab-container>
+
+  <!-- 可拖动悬浮球 -->
+  <movable-area class="fab-area">
+    <movable-view class="fab" direction="all" inertia="true" bindtap="onFabTap">
+      <text class="fab-icon">+</text>
+    </movable-view>
+  </movable-area>
+</view>

@@ -1,0 +1,115 @@
+<!--pages/add/Reward_add/Reward_add.wxml-->
+<!-- 固定导航栏容器 -->
+<view class="nav-fixed" style="padding-top: 0px;">
+  <navigation-bar title="悬赏发布" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+</view>
+
+<!-- 滚动区域，避开导航栏高度 -->
+<scroll-view 
+  class="page" 
+  scroll-y 
+  enhanced 
+  show-scrollbar="{{false}}"
+  style="margin-top: {{navTotalHeight}}px;"
+>
+
+  <!-- 白色卡片：标题（单行） -->
+  <view class="title-card">
+    <input 
+      class="title-input" 
+      placeholder="标题，4-20字" 
+      placeholder-class="placeholder"
+      maxlength="20"
+      bindinput="onTitleInput"
+      value="{{title}}"
+    />
+    <text class="char-count">{{title.length}}/20</text>
+  </view>
+
+  <!-- 米白色卡片：图片 + 描述（一体化，含 AI 按钮） -->
+  <view class="content-card">
+    <!-- 图片上传区 -->
+    <view class="upload-area">
+      <view class="image-list">
+        <view class="image-item" wx:for="{{imageList}}" wx:key="index">
+          <image class="uploaded-img" src="{{item}}" mode="aspectFill"></image>
+          <view class="delete-btn" bindtap="deleteImage" data-index="{{index}}">×</view>
+        </view>
+        <view class="add-btn" wx:if="{{imageList.length < 9}}" bindtap="chooseImage">
+          <text class="add-icon">+</text>
+        </view>
+      </view>
+      <text class="upload-tip">最多上传9张图片</text>
+    </view>
+
+    <!-- 详细描述（直接跟在图片下方） -->
+    <textarea 
+      class="desc-input" 
+      placeholder="详细描述一下你的需求..." 
+      placeholder-class="placeholder"
+      maxlength="500"
+      bindinput="onDescInput"
+      value="{{description}}"
+    ></textarea>
+    <view class="desc-footer">
+      <text class="char-count">{{description.length}}/500</text>
+      <view class="ai-btn" bindtap="onAIComplete">
+        <text class="ai-text">AI一键填充</text>
+        <text class="ai-icon">▶</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 白色卡片：四栏（价格区间、交易方式、售卖量、分类） -->
+  <view class="info-card">
+    <!-- 价格区间栏（两个输入框） -->
+    <view class="info-row">
+      <text class="info-label">价格区间</text>
+      <view class="price-range-wrap">
+        <text class="price-symbol">¥</text>
+        <input class="price-input min" type="digit" placeholder="最低价" placeholder-class="placeholder" bindinput="onMinPriceInput" value="{{minPrice}}"/>
+        <text class="price-sep">~</text>
+        <input class="price-input max" type="digit" placeholder="最高价" placeholder-class="placeholder" bindinput="onMaxPriceInput" value="{{maxPrice}}"/>
+      </view>
+    </view>
+    <view class="divider"></view>
+
+    <!-- 交易方式栏 -->
+    <view class="info-row">
+      <text class="info-label">交易方式</text>
+      <input class="info-input" placeholder="希望交易方式/地点" placeholder-class="placeholder" bindinput="onTradeMethodInput" value="{{tradeMethod}}"/>
+    </view>
+    <view class="divider"></view>
+
+    <!-- 售卖量栏 -->
+    <view class="info-row">
+      <text class="info-label">售卖量</text>
+      <view class="quantity-selector">
+        <view class="quantity-btn" bindtap="decreaseQuantity">-</view>
+        <input class="quantity-input" type="number" bindinput="onQuantityInput" value="{{quantity}}"/>
+        <view class="quantity-btn" bindtap="increaseQuantity">+</view>
+        <text class="quantity-unit">件</text>
+      </view>
+    </view>
+    <view class="divider"></view>
+
+    <!-- 分类栏（带实时推荐） -->
+    <view class="info-row category-row">
+      <text class="info-label">分类</text>
+      <view class="category-wrap">
+        <input class="category-input" placeholder="#话题 如:宠物用品" placeholder-class="placeholder" bindinput="onCategoryInput" value="{{category}}" bindfocus="onCategoryFocus" bindblur="onCategoryBlur"/>
+        <view class="recommend-list" wx:if="{{showRecommend && recommendList.length > 0}}">
+          <view wx:for="{{recommendList}}" wx:key="index" class="recommend-item" bindtap="selectRecommend" data-category="{{item}}">
+            #{{item}}
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 发布按钮（在卡片外部） -->
+  <view class="publish-btn" bindtap="onPublish">
+    <text class="publish-text">发布悬赏</text>
+  </view>
+
+</scroll-view>

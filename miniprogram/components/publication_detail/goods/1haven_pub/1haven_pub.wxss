@@ -1,0 +1,115 @@
+/* components/publication_detail/goods/1haven_pub/1haven_pub.wxss */
+.haven-pub {
+  padding: 20rpx 20rpx 0;
+  background-color: #f5f5f5;
+}
+
+.card {
+  display: flex;
+  background-color: #fff;
+  border-radius: 8rpx;
+  padding: 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.04);
+}
+
+.card-img {
+  width: 200rpx;
+  height: 200rpx;
+  border-radius: 4rpx;
+  background-color: #f0f0f0;
+  flex-shrink: 0;
+}
+
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-left: 24rpx;
+  min-height: 200rpx;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.goods-name {
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #1a1a1a;
+  line-height: 1.4;
+  flex: 1;
+  margin-right: 16rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.goods-price {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #e64340;
+  flex-shrink: 0;
+}
+
+.goods-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin: 12rpx 0;
+}
+
+.meta-item {
+  font-size: 26rpx;
+  color: #1a1a1a;
+  background-color: #f0f0f0;
+  padding: 4rpx 16rpx;
+  border-radius: 4rpx;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 20rpx;
+  margin-top: 8rpx;
+}
+
+.btn {
+  padding: 12rpx 32rpx;
+  border-radius: 4rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  border: none;
+  background-color: transparent;
+  line-height: 1.4;
+}
+
+.btn-shelve {
+  background-color: #f0f0f0;
+  color: #1a1a1a;
+}
+
+.btn-shelve:active {
+  background-color: #e0e0e0;
+}
+
+.btn-manage {
+  background-color: #07c160;
+  color: #ffffff;
+}
+
+.btn-manage:active {
+  background-color: #06ad56;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 120rpx 0;
+  color: #999;
+  font-size: 28rpx;
+}

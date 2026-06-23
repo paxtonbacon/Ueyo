@@ -1,0 +1,177 @@
+/* components/tab-container-no-space/tab-container-no-space.wxss */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;          /* 视口全高 */
+  width: 100%;
+  overflow: hidden;
+}
+
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;          /* 视口全高 */
+  width: 100%;
+  overflow: hidden;
+}
+/* 导航栏整体样式 */
+.nav-bar {
+  /* position: fixed; */
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #ffffff;
+  z-index: 100;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+}
+
+.nav-bar-inner {
+  display: flex;
+  align-items: center;
+  height: 44px; /* 基础高度，iOS 默认 */
+  /* margin-right: 350rpx; */
+  position: relative;
+}
+
+/* Android 下稍高 */
+@media (min-width: 411px) {
+  .nav-bar-inner {
+    height: 48px;
+  }
+}
+
+.nav-left, .nav-placeholder {
+  width: 88rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-right {
+  width: 50rpx;
+  /* flex-shrink: 0; */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.nav-placeholder {
+  width: 88rpx;
+}
+
+.left-btn, .nav-right {
+  padding: 12rpx;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.btn-hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.icon {
+  width: 44rpx;
+  height: 44rpx;
+}
+
+/* Tab 标签栏 */
+.nav-tabs {
+  flex: 1;
+  white-space: nowrap;
+  height: 100%;
+}
+
+.tabs-wrapper {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0;
+}
+
+.tab-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 32rpx;
+  height: 100%;
+  font-size: 32rpx;
+  font-weight: 500;
+  color: #666;
+  position: relative;
+  white-space: nowrap;
+}
+
+.tab-item.active {
+  color: #07c160;
+}
+
+.tab-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 32rpx;
+  right: 32rpx;
+  height: 4rpx;
+  background-color: #07c160;
+  border-radius: 2rpx;
+}
+
+/* .main-content {
+  position: relative;
+  width: 100%;
+} */
+
+/* 主 Swiper 区域 */
+.main-swiper {
+  flex: 1;                /* 占满剩余高度 */
+  width: 100%;
+}
+
+.tab-scroll {
+  height: 100%;
+  background-color: #f5f5f5;
+}
+
+/* 侧边栏样式 */
+.sidebar-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  transition: opacity 0.3s;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 540rpx;
+  background-color: #fff;
+  z-index: 201;
+  transition: transform 0.3s ease;
+  box-shadow: 2rpx 0 20rpx rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-header {
+  padding: 80rpx 40rpx 40rpx;
+  background-color: #07c160;
+  color: #fff;
+  font-size: 40rpx;
+  font-weight: bold;
+}
+
+.sidebar-item {
+  padding: 30rpx 40rpx;
+  font-size: 32rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.sidebar-item.active {
+  background-color: #f5f5f5;
+}

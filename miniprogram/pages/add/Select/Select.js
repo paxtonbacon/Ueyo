@@ -66,7 +66,7 @@ Page({
   // 点击商品卡片
   onGoodsTap() {
     wx.navigateTo({
-      url: '/pages/goods/goods',  // 请替换为实际商品页面路径
+      url: '/pages/add/Goods_add/Goods_add',  // 请替换为实际商品页面路径
       fail: () => {
         wx.showToast({ title: '商品页面开发中', icon: 'none' });
       }
@@ -76,7 +76,7 @@ Page({
   // 点击悬赏卡片
   onRewardTap() {
     wx.navigateTo({
-      url: '/pages/reward/reward', // 请替换为实际悬赏页面路径
+      url: '/pages/add/Reward_add/Reward_add', // 请替换为实际悬赏页面路径
       fail: () => {
         wx.showToast({ title: '悬赏页面开发中', icon: 'none' });
       }
@@ -86,7 +86,7 @@ Page({
   // 点击话题大卡片
   onTopicTap() {
     wx.navigateTo({
-      url: '/pages/topic/topic',   // 请替换为实际话题页面路径
+      url: '/pages/add/Topic_add/Topic_add',   // 请替换为实际话题页面路径
       fail: () => {
         wx.showToast({ title: '话题页面开发中', icon: 'none' });
       }

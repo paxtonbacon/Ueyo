@@ -1,0 +1,86 @@
+<!--pages/message/Message_detail/Message_detail.wxml-->
+<view class="container">
+  <!-- 自定义导航栏（fixed） -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar-inner" style="padding-right: {{rightCapsuleSafePadding}};">
+      <!-- 左侧：返回按钮 + 用户头像 + 昵称 -->
+      <view class="nav-left">
+        <view class="back-btn" bindtap="onBack">
+          <image class="back-icon" src="/images/icon_back.png" mode="aspectFit"></image>
+        </view>
+        <view class="user-info" bindtap="onAvatarTap">
+          <image class="user-avatar" src="{{targetUser.avatar}}" mode="aspectFill"></image>
+          <text class="user-name">{{targetUser.nickname}}</text>
+        </view>
+      </view>
+
+      <!-- 中间占位 -->
+      <view class="nav-center">
+        <!-- <view class="msg-btn" bindtap="onMsgTap">
+          <text>私信</text>
+        </view> -->
+      </view>
+
+      <!-- 右侧：私信按钮 -->
+      <view class="nav-right">
+      </view>
+    </view>
+  </view>
+
+  <!-- 聊天消息列表 -->
+  <scroll-view 
+    class="chat-scroll" 
+    scroll-y 
+    scroll-into-view="{{scrollToView}}" 
+    scroll-with-animation
+    style="padding-top: calc({{statusBarHeight}}px + 48px); margin: 11px;">
+    <view class="message-list">
+      <block wx:for="{{messageList}}" wx:key="id">
+        <!-- 他人消息（左） -->
+        <view class="message-item left" wx:if="{{item.from !== 'self'}}">
+          <image class="msg-avatar" src="{{item.avatar}}" mode="aspectFill"></image>
+          <view class="msg-bubble left-bubble">{{item.content}}</view>
+        </view>
+        <!-- 自己消息（右） -->
+        <view class="message-item right" wx:else>
+          <view class="msg-bubble right-bubble">{{item.content}}</view>
+          <image class="msg-avatar" src="{{myAvatar}}" mode="aspectFill"></image>
+        </view>
+      </block>
+      <view id="msg-bottom" style="height: 20rpx;"></view>
+    </view>
+  </scroll-view>
+
+  <!-- 底部输入区域 -->
+  <view class="input-bar" style="padding-bottom: calc({{keyboardHeight}}px + 11px);">
+    <input 
+      class="input-field" 
+      type="text" 
+      placeholder="请输入消息" 
+      confirm-type="send"
+      bindconfirm="onSendMsg"
+      bindinput="onInputChange"
+      value="{{inputText}}"
+      adjust-position="{{false}}"
+    />
+    <view class="plus-btn" bindtap="togglePlusPanel">＋</view>
+  </view>
+
+  <!-- 加号弹出的功能面板 -->
+  <view class="plus-panel" wx:if="{{showPlusPanel}}" bindtap="hidePlusPanel">
+    <view class="panel-content" catchtap="preventHide">
+      <view class="panel-item" bindtap="onChooseImage">
+        <view class="icon">📷</view>
+        <text>相册</text>
+      </view>
+      <view class="panel-item" bindtap="onTakePhoto">
+        <view class="icon">📸</view>
+        <text>拍摄</text>
+      </view>
+      <view class="panel-item" bindtap="onChooseLocation">
+        <view class="icon">📍</view>
+        <text>位置</text>
+      </view>
+    </view>
+  </view>
+</view>

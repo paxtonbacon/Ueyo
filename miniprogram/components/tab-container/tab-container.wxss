@@ -1,7 +1,22 @@
 /* components/tab-container/tab-container.wxss */
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;          /* 视口全高 */
+  width: 100%;
+  overflow: hidden;
+}
+
+.page-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;          /* 视口全高 */
+  width: 100%;
+  overflow: hidden;
+}
 /* 导航栏整体样式 */
 .nav-bar {
-  position: fixed;
+  /* position: fixed; */
   top: 0;
   left: 0;
   right: 0;
@@ -103,17 +118,17 @@
   border-radius: 2rpx;
 }
 
-.main-content {
+/* .main-content {
   position: relative;
   width: 100%;
-}
+} */
 
 /* 主 Swiper 区域 */
 .main-swiper {
+  flex: 1;                /* 占满剩余高度 */
   width: 100%;
 }
 
-/* 每个 Tab 内部的滚动视图 */
 .tab-scroll {
   height: 100%;
   background-color: #f5f5f5;

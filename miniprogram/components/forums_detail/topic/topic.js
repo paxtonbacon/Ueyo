@@ -63,8 +63,8 @@ Component({
     generateMockTopics() {
       const topic1 = {
         id: 'topic_001',
-        title: '如何评价微信小程序开发体验？',
-        desc: '探讨小程序开发过程中的技巧、踩坑与最佳实践，分享你的见解。',
+        title: '摄影爱好者社群',
+        desc: '天南海北，一镜到底！览百般胜景，汇千番精彩。',
         posts: [
           { titleSnippet: '小程序云开发入门实战：快速搭建待办事项应用', coverImage: 'https://picsum.photos/id/10/300/200' },
           { titleSnippet: '掌握自定义组件，提升代码复用性与可维护性', coverImage: 'https://picsum.photos/id/20/300/200' },
@@ -75,7 +75,7 @@ Component({
       };
       const topic2 = {
         id: 'topic_002',
-        title: '有哪些适合新手的编程学习资源？',
+        title: '编程+AI，时代缔造者',
         desc: '整理 GitHub、在线课程、技术社区等优质资源，助你高效入门编程。',
         posts: [
           { titleSnippet: '免费编程书籍大全：从 Python 到机器学习', coverImage: 'https://picsum.photos/id/100/300/200' },
@@ -84,7 +84,18 @@ Component({
           { titleSnippet: 'Vue 与 React 入门对比：2024 新手选择指南', coverImage: 'https://picsum.photos/id/104/300/200' }
         ]
       };
-      return [topic1, topic2];
+      const topic3 = {
+        id: 'topic_003',
+        title: '来玩洛克王国！',
+        desc: '整理 GitHub、在线课程、技术社区等优质资源，助你高效入门编程。',
+        posts: [
+          { titleSnippet: '免费编程书籍大全：从 Python 到机器学习', coverImage: 'https://picsum.photos/id/109/300/200' },
+          { titleSnippet: '菜鸟教程 vs W3School：新手该选哪个？', coverImage: 'https://picsum.photos/id/106/300/200' },
+          { titleSnippet: 'GitHub 上星标过万的开源学习路线图合集', coverImage: 'https://picsum.photos/id/110/300/200' },
+          { titleSnippet: 'Vue 与 React 入门对比：2024 新手选择指南', coverImage: 'https://picsum.photos/id/108/300/200' }
+        ]
+      };
+      return [topic1, topic2, topic3];
     },
 
     /**

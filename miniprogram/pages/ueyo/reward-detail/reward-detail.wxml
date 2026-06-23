@@ -1,0 +1,87 @@
+<!--pages/ueyo/reward-detail/reward-detail.wxml-->
+<!--pages/reward/detail/detail.wxml-->
+<!-- 自定义导航栏（fixed） -->
+<view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+  <view class="nav-bar-inner" style="padding-right: {{rightCapsuleSafePadding}};">
+    <!-- 左侧：返回按钮 + 用户头像 + 昵称 -->
+    <view class="nav-left">
+      <view class="back-btn" bindtap="onBack">
+        <image class="back-icon" src="/images/icon_back.png" mode="aspectFit"></image>
+      </view>
+      <view class="user-info" bindtap="onAvatarTap">
+        <image class="user-avatar" src="{{rewardInfo.buyerAvatar}}" mode="aspectFill"></image>
+        <text class="user-name">{{rewardInfo.buyerName}}</text>
+      </view>
+    </view>
+
+    <!-- 中间占位 -->
+    <view class="nav-center"></view>
+
+    <!-- 右侧：私信按钮（可选，此处保留占位） -->
+    <view class="nav-right"></view>
+  </view>
+</view>
+
+<!-- 滚动区域的外层容器 -->
+<view class="scroll-wrapper" style="padding-top: {{navTotalHeight}}px;">
+  <scroll-view 
+    class="main-content" 
+    scroll-y 
+    enhanced 
+    show-scrollbar="{{false}}" 
+    style="height: {{scrollViewHeight}}px;"
+  >
+    <!-- 图片轮播（悬赏也有图片） -->
+    <swiper class="image-swiper" indicator-dots="{{true}}" indicator-color="rgba(0,0,0,0.3)" indicator-active-color="#ffffff" circular="{{true}}" autoplay="{{false}}">
+      <swiper-item wx:for="{{rewardInfo.images}}" wx:key="index">
+        <image class="swiper-image" src="{{item}}" mode="aspectFill"></image>
+      </swiper-item>
+    </swiper>
+
+    <!-- 价格区间（替代价格+成新） -->
+    <view class="price-section">
+      <text class="price">¥{{rewardInfo.minPrice}}~{{rewardInfo.maxPrice}}</text>
+    </view>
+
+    <!-- 标题 -->
+    <text class="title">{{rewardInfo.title}}</text>
+
+    <!-- 描述 -->
+    <text class="desc">{{rewardInfo.desc}}</text>
+
+    <!-- 交易方式（悬赏也支持交易方式） -->
+    <view class="trade-ways">
+      <text class="trade-label">交易方式：</text>
+      <text class="trade-value">{{rewardInfo.tradeWays}}</text>
+    </view>
+
+    <!-- ========= 评论模块（预留） ========= -->
+    <comment-section 
+      id="commentSection"
+      postId="{{postId}}"
+      bottomBarHeight="calc({{bottomBarHeight}}px + {{safeAreaBottom}}px)"
+      bind:reply="onReplyComment"
+      bind:like="onCommentLike"
+    />
+
+    <!-- ========= 底部悬赏推荐 ========= -->
+    <view class="recommend-section">
+      <text class="section-title">猜你想接</text>
+      <reward-list id="recommendRewardList" type="reward" />
+    </view>
+  </scroll-view>
+</view>
+
+<!-- 底部操作栏（固定） -->
+<view class="bottom-bar" style="padding-bottom: {{safeAreaBottom}}px;">
+  <view class="bar-content">
+    <!-- 左侧收藏按钮 -->
+    <view class="favorite-btn" bindtap="onToggleFavorite">
+      <image class="star-icon" src="{{isFavorited ? '/images/star_filled.png' : '/images/star_outline.png'}}" mode="aspectFit"></image>
+    </view>
+    <!-- 右侧确认接单按钮 -->
+    <view class="accept-btn" bindtap="onAcceptOrder">
+      <text class="accept-text">确认接单</text>
+    </view>
+  </view>
+</view>

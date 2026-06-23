@@ -1,0 +1,71 @@
+<!--components/comments/comments.wxml-->
+<view class="comment-section">
+  <view class="section-title">评论 {{totalCount}}</view>
+  
+  <view class="comment-list">
+    <view wx:for="{{comments}}" wx:key="id" class="comment-item">
+      <!-- 一级评论：整个灰色区域可点击回复（但不包括头像/昵称/点赞区） -->
+      <view class="comment-main" catchtap="onReplyMain" data-id="{{item.id}}" data-name="{{item.userName}}">
+        <image class="avatar" src="{{item.userAvatar}}" mode="aspectFill" catchtap="onUserTap" data-user-id="{{item.userId}}"></image>
+        <view class="comment-body">
+          <view class="comment-header">
+            <text class="user-name" catchtap="onUserTap" data-user-id="{{item.userId}}">{{item.userName}}</text>
+            <view class="comment-actions">
+              <text class="comment-time">{{item.createTime}}</text>
+              <view class="like-wrap" catchtap="onLike" data-id="{{item.id}}" data-type="comment">
+                <image class="like-icon" src="{{item.isLiked ? '/images/like_filled.png' : '/images/like_outline.png'}}" mode="aspectFit"></image>
+                <text class="like-count">{{item.likeCount}}</text>
+              </view>
+            </view>
+          </view>
+          <text class="comment-content">{{item.content}}</text>
+          <!-- 原来的回复按钮已删除 -->
+        </view>
+      </view>
+
+      <!-- 二级回复列表（缩进） -->
+      <view wx:if="{{item.replies && item.replies.length > 0}}" class="reply-list">
+        <view wx:for="{{item.replies}}" wx:key="id" class="reply-item">
+          <!-- 整个回复项也可点击回复（二级回复的回复） -->
+          <view class="reply-content-wrapper" catchtap="onReplyMain" data-id="{{item.id}}" data-name="{{item.userName}}" data-parent-id="{{item.parentId}}">
+            <image class="reply-avatar" src="{{item.userAvatar}}" mode="aspectFill" catchtap="onUserTap" data-user-id="{{item.userId}}"></image>
+            <view class="reply-body">
+              <view class="reply-header">
+                <text class="reply-user" catchtap="onUserTap" data-user-id="{{item.userId}}">{{item.userName}}</text>
+                <view class="reply-actions">
+                  <text class="reply-time">{{item.createTime}}</text>
+                  <view class="like-wrap" catchtap="onLike" data-id="{{item.id}}" data-type="reply">
+                    <image class="like-icon" src="{{item.isLiked ? '/images/like_filled.png' : '/images/like_outline.png'}}" mode="aspectFit"></image>
+                    <text class="like-count">{{item.likeCount}}</text>
+                  </view>
+                </view>
+              </view>
+              <text class="reply-content">
+                <text wx:if="{{item.replyToUserName}}" class="reply-to">回复 @{{item.replyToUserName}}：</text><text class="reply-content-text">{{item.content}}</text>
+              </text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部悬浮输入框 -->
+  <view class="input-bar" wx:if="{{showInput}}">
+    <view class="input-mask" bindtap="hideInput"></view>
+    <view class="input-container" style="margin-bottom: 44px;">
+      <textarea 
+        class="comment-input" 
+        placeholder="{{replyTarget ? '回复 ' + replyTarget.userName + ':' : '写下你的评论...'}}"
+        auto-focus="{{true}}"
+        auto-height="{{true}}"
+        bindconfirm="onSubmitComment"
+        model:value="{{commentText}}"
+        adjust-position="{{true}}"
+        cursor-spacing="20"
+        show-confirm-bar="{{false}}"
+      ></textarea>
+      <button class="submit-btn" size="mini" bindtap="onSubmitComment">发送</button>
+    </view>
+  </view>
+</view>

@@ -61,14 +61,13 @@
       <text class="trade-value">{{goodsInfo.tradeWays}}</text>
     </view>
 
-    <!-- ========= 评论模块（预留，后续替换为论坛评论组件） ========= -->
-    <view class="comment-placeholder">
-      <text class="comment-title">评论</text>
-      <!-- 此处后续替换为 <forum-comment /> 组件 -->
-      <view class="comment-demo">
-        <text>📝 评论组件预留区域（论坛评论组件待接入）</text>
-      </view>
-    </view>
+    <comment-section 
+      id="commentSection"
+      postId="{{postId}}"
+      bottomBarHeight="calc({{bottomBarHeight}}px + {{safeAreaBottom}}px)"
+      bind:reply="onReplyComment"
+      bind:like="onCommentLike"
+    />
 
     <!-- ========= 底部商品推荐 ========= -->
     <view class="recommend-section">

@@ -1,6 +1,5 @@
 <!--components/list/recommend-list/recommend-list.wxml-->
 <view class="recommend-grid">
-  <!-- 根据 type 展示不同卡片样式 -->
   <view wx:for="{{list}}" wx:key="id" class="card" bindtap="onCardTap" data-id="{{item.id}}" data-type="{{item.type}}">
     <!-- 商品卡片样式 -->
     <block wx:if="{{item.type === 'goods'}}">
@@ -16,10 +15,11 @@
       </view>
     </block>
 
-    <!-- 悬赏卡片样式 -->
+    <!-- 悬赏卡片样式（新增图片） -->
     <block wx:else>
+      <image class="card-image" src="{{item.image}}" mode="widthFix" lazy-load></image>
       <text class="reward-title">{{item.title}}</text>
-      <text class="reward-desc">{{item.desc}}</text>
+      <!-- <text class="reward-desc">{{item.desc}}</text> -->
       <text class="reward-price">¥{{item.minPrice}}~{{item.maxPrice}}</text>
       <view class="buyer-row" catchtap="onBuyerTap" data-buyer-id="{{item.buyerId}}">
         <image class="avatar" src="{{item.buyerAvatar}}" mode="aspectFill"></image>

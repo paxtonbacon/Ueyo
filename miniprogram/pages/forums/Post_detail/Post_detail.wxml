@@ -1,0 +1,71 @@
+<!--pages/forums/Post_detail/Post_detail.wxml-->
+<!-- pages/forums/post_detail/post_detail.wxml -->
+  <!-- 自定义导航栏（fixed） -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar-inner" style="padding-right: {{rightCapsuleSafePadding}}px;">
+      <view class="nav-left">
+        <view class="back-btn" bindtap="onBack">
+          <image class="back-icon" src="/images/icon_back.png" mode="aspectFit"></image>
+        </view>
+        <view class="user-info" bindtap="onAvatarTap">
+          <image class="user-avatar" src="{{postInfo.userAvatar}}" mode="aspectFill"></image>
+          <text class="user-name">{{postInfo.userName}}</text>
+        </view>
+      </view>
+      <view class="nav-center"></view>
+      <view class="nav-right"></view>
+    </view>
+  </view>
+
+  <!-- 主体滚动区域（避开导航栏和底部栏） -->
+  <scroll-view 
+    class="main-scroll" 
+    scroll-y 
+    enhanced 
+    show-scrollbar="{{false}}"
+    style="top: {{navTotalHeight}}px; bottom: calc({{bottomBarHeight}}px + {{safeAreaBottom}}px); padding-bottom: 0%;"
+  >
+    <!-- 轮播图 -->
+    <swiper class="image-swiper" indicator-dots="{{true}}" indicator-color="rgba(0,0,0,0.3)" indicator-active-color="#ffffff" circular="{{true}}">
+      <swiper-item wx:for="{{postInfo.images}}" wx:key="index">
+        <image class="swiper-image" src="{{item}}" mode="aspectFill"></image>
+      </swiper-item>
+    </swiper>
+
+    <!-- 标题 -->
+    <text class="post-title">{{postInfo.title}}</text>
+
+    <!-- 正文内容 -->
+    <text class="post-content">{{postInfo.content}}</text>
+
+    <!-- 分类与时间 -->
+    <view class="post-meta">
+      <text class="category" bindtap="onCategoryTap">{{postInfo.category}}</text>
+      <text class="post-time">{{postInfo.postTime}}</text>
+    </view>
+
+    <!-- 评论组件 -->
+    <comment-section 
+      id="commentSection"
+      postId="{{postId}}"
+      bottomBarHeight="calc({{bottomBarHeight}}px + {{safeAreaBottom}}px)"
+      bind:reply="onReplyComment"
+      bind:like="onCommentLike"
+    />
+  </scroll-view>
+
+  <!-- 底部操作栏（fixed） -->
+  <view class="bottom-bar" style="padding-bottom: {{safeAreaBottom}}px; height: {{bottomBarHeight}}px;">
+    <view class="action-item" bindtap="onLikePost">
+      <image class="action-icon" src="{{isPostLiked ? '/images/like_filled.png' : '/images/like_outline.png'}}" mode="aspectFit"></image>
+      <text class="action-count">{{postInfo.likeCount}}</text>
+    </view>
+    <view class="action-item" bindtap="onCollectPost">
+      <image class="action-icon" src="{{isCollected ? '/images/star_filled.png' : '/images/star_line.png'}}" mode="aspectFit"></image>
+      <text class="action-count">{{postInfo.collectCount}}</text>
+    </view>
+    <view class="action-item" bindtap="onShowGlobalComment">
+      <image class="action-icon" src="/images/comments.png" mode="aspectFit"></image>
+      <text class="action-count">{{postInfo.commentCount}}</text>
+    </view>
+  </view>

@@ -1,76 +1,77 @@
 <!--components/tab-container/tab-container.wxml-->
-<!-- 自定义导航栏 -->
-<view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
-  <view class="nav-bar-inner" style="padding-right: {{rightMargin}}px;">
-    <!-- 左侧按钮 -->
-    <view class="nav-left" wx:if="{{showLeft}}">
-      <view class="left-btn" bindtap="onLeftTap" hover-class="btn-hover">
-        <image wx:if="{{!isBack}}" class="icon" src="/images/icon_menu.png" mode="aspectFit"></image>
-        <image wx:else class="icon" src="/images/icon_back.png" mode="aspectFit"></image>
-      </view>
-    </view>
-
-    <!-- 中间 Tab 标签栏（横向滚动） -->
-    <scroll-view class="nav-tabs" scroll-x enhanced show-scrollbar="{{false}}" scroll-into-view="{{scrollIntoView}}">
-      <view class="tabs-wrapper">
-        <view 
-          wx:for="{{tabs}}" 
-          wx:key="index"
-          id="tab-{{index}}"
-          class="tab-item {{currentTab === index ? 'active' : ''}}"
-          style="flex: {{tabFlex}};"
-          bindtap="onTabClick"
-          data-index="{{index}}"
-        >
-          <text>{{item.name}}</text>
+<view class="page-container">
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{statusBarHeight}}px;">
+    <view class="nav-bar-inner" style="padding-right: {{rightMargin}}px;">
+      <!-- 左侧按钮 -->
+      <view class="nav-left" wx:if="{{showLeft}}">
+        <view class="left-btn" bindtap="onLeftTap" hover-class="btn-hover">
+          <image wx:if="{{!isBack}}" class="icon" src="/images/icon_menu.png" mode="aspectFit"></image>
+          <image wx:else class="icon" src="/images/icon_back.png" mode="aspectFit"></image>
         </view>
       </view>
-    </scroll-view>
 
-    <!-- 右侧按钮 -->
-    <view class="nav-right" wx:if="{{showRight}}" bindtap="onSearchTap" hover-class="btn-hover">
-      <image class="icon" src="/images/icon_search.png" mode="aspectFit"></image>
-    </view>
-
-    <!-- 占位元素，当左右按钮均隐藏时保证 Tab 仍居中 -->
-    <view class="nav-placeholder" wx:if="{{!showLeft && !showRight}}"></view>
-  </view>
-</view>
-
-<!-- 主内容区：Swiper 容器 -->
-<view class="main-content" style="margin-top: {{navTotalHeight}}px;">
-  <swiper 
-    class="main-swiper" 
-    current="{{currentTab}}" 
-    bindchange="onSwiperChange"
-    style="height: {{swiperHeight}}px;"
-  >
-    <swiper-item wx:for="{{tabs}}" wx:key="index">
-      <!-- 每个 Tab 独立的滚动区域 -->
-      <scroll-view 
-        class="tab-scroll" 
-        scroll-y 
-        enhanced 
-        show-scrollbar="{{true}}"
-        scroll-top="{{scrollTops[index]}}"
-        bindscroll="onScroll"
-        bindscrolltolower="onLoadMore"
-        refresher-enabled="{{true}}"
-        refresher-triggered="{{refreshTriggered[index]}}"
-        bindrefresherrefresh="onPullRefresh"
-        data-tab="{{index}}"
-      >
-        <!-- 由父页面通过 slot 注入每个 Tab 的具体内容 -->
-        <slot name="tab-content-{{index}}"></slot>
+      <!-- 中间 Tab 标签栏（横向滚动） -->
+      <scroll-view class="nav-tabs" scroll-x enhanced show-scrollbar="{{false}}" scroll-into-view="{{scrollIntoView}}">
+        <view class="tabs-wrapper">
+          <view 
+            wx:for="{{tabs}}" 
+            wx:key="index"
+            id="tab-{{index}}"
+            class="tab-item {{currentTab === index ? 'active' : ''}}"
+            style="flex: {{tabFlex}};"
+            bindtap="onTabClick"
+            data-index="{{index}}"
+          >
+            <text>{{item.name}}</text>
+          </view>
+        </view>
       </scroll-view>
-    </swiper-item>
-  </swiper>
-</view>
 
-<!-- 侧边栏（菜单按钮触发） -->
-<view class="sidebar-mask" wx:if="{{sidebarVisible}}" bindtap="onCloseSidebar"></view>
-<view class="sidebar" style="transform: translateX({{sidebarVisible ? 0 : '-100%'}});">
-    <view class="sidebar-header">菜单</view>
-    <view class="sidebar-item" bindtap="goToProfile">个人资料</view>
-    <view class="sidebar-item" bindtap="goToSettings">设置</view>
+      <!-- 右侧按钮 -->
+      <view class="nav-right" wx:if="{{showRight}}" bindtap="onSearchTap" hover-class="btn-hover">
+        <image class="icon" src="/images/icon_search.png" mode="aspectFit"></image>
+      </view>
+
+      <!-- 占位元素，当左右按钮均隐藏时保证 Tab 仍居中 -->
+      <view class="nav-placeholder" wx:if="{{!showLeft && !showRight}}"></view>
+    </view>
+  </view>
+
+  <!-- 主内容区：Swiper 容器 -->
+  <!-- <view class="main-content" style="padding: 0px;"> -->
+    <swiper 
+      class="main-swiper" 
+      current="{{currentTab}}" 
+      bindchange="onSwiperChange"
+    >
+      <swiper-item wx:for="{{tabs}}" wx:key="index">
+        <!-- 每个 Tab 独立的滚动区域 -->
+        <scroll-view 
+          class="tab-scroll" 
+          scroll-y 
+          enhanced 
+          show-scrollbar="{{true}}"
+          scroll-top="{{scrollTops[index]}}"
+          bindscroll="onScroll"
+          bindscrolltolower="onLoadMore"
+          refresher-enabled="{{true}}"
+          refresher-triggered="{{refreshTriggered[index]}}"
+          bindrefresherrefresh="onPullRefresh"
+          data-tab="{{index}}"
+        >
+          <!-- 由父页面通过 slot 注入每个 Tab 的具体内容 -->
+          <slot name="tab-content-{{index}}"></slot>
+        </scroll-view>
+      </swiper-item>
+    </swiper>
+  <!-- </view> -->
+
+  <!-- 侧边栏（菜单按钮触发） -->
+  <view class="sidebar-mask" wx:if="{{sidebarVisible}}" bindtap="onCloseSidebar"></view>
+  <view class="sidebar" style="transform: translateX({{sidebarVisible ? 0 : '-100%'}});">
+      <view class="sidebar-header">菜单</view>
+      <view class="sidebar-item" bindtap="goToProfile">个人资料</view>
+      <view class="sidebar-item" bindtap="goToSettings">设置</view>
+  </view>
 </view>

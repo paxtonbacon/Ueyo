@@ -1,1 +1,298 @@
 /* pages/self/Myself/Myself.wxss */
+/* pages/my/my.wxss */
+.icon {
+  padding-top: 20px;
+  width: 70rpx;
+  height: 70rpx;
+}
+
+/* 顶部留白 */
+.top-blank {
+  height: 200rpx;
+  background-color: #fff;
+  position: relative;
+}
+
+.settings-btn {
+  position: absolute;
+  left: 32rpx;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 44rpx;
+  padding: 10rpx;
+}
+
+/* 登录区域 */
+.login-section {
+  display: flex;
+  align-items: center;
+  gap: 80rpx;
+  padding: 30rpx 32rpx 30rpx 80rpx;
+  background-color: #ffffff8b;
+}
+
+.avatar-placeholder {
+  width: 150rpx;
+  height: 150rpx;
+  border-radius: 50%;
+  background-color: #146379;
+}
+
+.login-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.login-btn {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 8rpx;
+  width: 200rpx;
+  text-align: right;
+}
+
+.user-tag {
+  font-size: 26rpx;
+  color: #999;
+  display: block;
+  width: 200rpx;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* 四个入口 */
+.stats-row {
+  display: flex;
+  background-color: #fff;
+  margin: 30rpx 32rpx;
+  border-radius: 24rpx;
+  padding: 30rpx 0;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  border: 1rpx solid #e0e0e0;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.stat-num {
+  font-size: 32rpx;
+  font-weight: normal;
+  color: #000000;
+  text-align: center;
+}
+
+/* ========== 数据统计模块 ========== */
+
+/* 统计卡片 */
+.stats-card {
+  background-color: #fff;
+  margin: 24rpx 24rpx;
+  padding: 28rpx 24rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+  margin-bottom: 24rpx;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.card-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.trend-badge {
+  background-color: #f0f0f0;
+  padding: 6rpx 16rpx;
+  border-radius: 20rpx;
+}
+
+.trend-up {
+  color: #40c463;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.trend-down {
+  color: #ff4d4f;
+  font-size: 24rpx;
+  font-weight: 500;
+}
+
+.card-sub {
+  font-size: 24rpx;
+  color: #aaa;
+  margin-top: 6rpx;
+  display: block;
+}
+
+/* 折线图标签 */
+.chart-labels {
+  display: flex;
+  justify-content: space-around;
+  padding: 16rpx 0 0;
+}
+
+.label {
+  font-size: 24rpx;
+  color: #aaa;
+  text-align: center;
+  width: 70rpx;
+}
+
+/* ========== GitHub 风格热力图 ========== */
+
+/* 月份标题行 */
+.heatmap-months {
+  display: flex;
+  margin-bottom: 16rpx;
+  padding-left: 60rpx;
+}
+
+.month-spacer {
+  width: 60rpx;
+  flex-shrink: 0;
+}
+
+.month-cells {
+  display: flex;
+}
+
+.month-cell {
+  width: 40rpx;
+  font-size: 22rpx;
+  color: #aaa;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.month-cell.hidden {
+  visibility: hidden;
+}
+
+/* 热力图主体 */
+.heatmap-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.heatmap-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.weekday-label {
+  width: 60rpx;
+  font-size: 24rpx;
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+.heatmap-cells {
+  display: flex;
+  gap: 6rpx;
+  flex-wrap: wrap;
+}
+
+.heatmap-cell {
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: 4rpx;
+}
+
+/* 颜色等级 */
+.heatmap-cell.level-0 {
+  background-color: #ebedf0;
+}
+.heatmap-cell.level-1 {
+  background-color: #9be9a8;
+}
+.heatmap-cell.level-2 {
+  background-color: #40c463;
+}
+.heatmap-cell.level-3 {
+  background-color: #30a14e;
+}
+.heatmap-cell.level-4 {
+  background-color: #216e39;
+}
+
+/* 图例 */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6rpx;
+  margin-top: 24rpx;
+}
+
+.legend-label {
+  font-size: 22rpx;
+  color: #aaa;
+}
+
+.legend-cell {
+  width: 24rpx;
+  height: 24rpx;
+  border-radius: 4rpx;
+}
+
+/* 汇总卡片 */
+.stats-summary {
+  display: flex;
+  background-color: #fff;
+  margin: 0 24rpx 24rpx;
+  border-radius: 24rpx;
+  padding: 28rpx 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+}
+
+.summary-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12rpx;
+  position: relative;
+}
+
+.summary-icon-wrap {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+}
+
+.summary-icon {
+  font-size: 44rpx;
+}
+
+.summary-value {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: #40c463;
+}
+
+.summary-label {
+  font-size: 24rpx;
+  color: #aaa;
+}

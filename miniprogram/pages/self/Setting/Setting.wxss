@@ -1,0 +1,136 @@
+/* pages/self/Setting/Setting.wxss */
+/* pages/index/index.wxss */
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 自定义导航栏 */
+.navbar {
+  position: sticky;
+  top: 0;
+  background-color: #ffffff;
+  padding: 12rpx 32rpx;
+  display: flex;
+  align-items: center;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
+  z-index: 10;
+}
+
+.back-btn {
+  width: 48rpx;
+  height: 48rpx;
+  background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23333"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>') no-repeat center;
+  background-size: 40rpx;
+  border-radius: 50%;
+}
+
+.back-btn:active {
+  background-color: #e5e5e5;
+}
+
+.navbar-title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 500;
+  color: #000000;
+  margin-right: 48rpx;
+}
+
+/* 内容区域 */
+.content {
+  flex: 1;
+  padding: 32rpx 32rpx 48rpx;
+}
+
+/* 卡片样式 */
+.info-card, .settings-card {
+  background-color: #ffffff;
+  border-radius: 32rpx;
+  margin-bottom: 40rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.02);
+  border: 1rpx solid #f0f0f0;
+  overflow: hidden;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx 32rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+  background-color: #fff;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-size: 33rpx;
+  color: #333333;
+  font-weight: 400;
+}
+
+.info-right {
+  display: flex;
+  align-items: center;
+}
+
+.info-value {
+  font-size: 30rpx;
+  color: #888888;
+  margin-right: 16rpx;
+  max-width: 400rpx;
+  text-align: right;
+}
+
+.arrow {
+  font-size: 32rpx;
+  color: #c0c0c0;
+  margin-left: 8rpx;
+}
+
+/* 开关项 */
+.switch-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 32rpx 32rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+}
+
+.switch-item:last-child {
+  border-bottom: none;
+}
+
+.switch-label {
+  font-size: 33rpx;
+  color: #333333;
+}
+
+/* 退出登录按钮 */
+.logout-btn {
+  background-color: #ffffff;
+  border-radius: 24rpx;
+  padding: 28rpx 0;
+  text-align: center;
+  margin-top: 40rpx;
+  border: 1rpx solid #ff3b30;
+  color: #ff3b30;
+  font-size: 32rpx;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.logout-btn:active {
+  background-color: #fff2f0;
+}

@@ -1,2 +1,23 @@
 <!--pages/message/People/People.wxml-->
-<text>pages/message/People/People.wxml</text>
+<navigation-bar title="聊天" back="{{false}}" color="black" background="#FFF"></navigation-bar>
+<view class="chat-list">
+  <block wx:for="{{chatList}}" wx:key="id">
+    <view class="chat-item" bindtap="onTapChat" data-id="{{item.id}}" data-nickname="{{item.nickname}}" data-avatar="{{item.avatar}}">
+      <view class="avatar">
+        <image src="{{item.avatar}}" mode="aspectFill"></image>
+        <view wx:if="{{item.unreadCount > 0}}" class="unread-badge">{{item.unreadCount > 99 ? '99+' : item.unreadCount}}</view>
+      </view>
+      <view class="content">
+        <view class="top-line">
+          <text class="nickname">{{item.nickname}}</text>
+          <text class="time">{{item.lastTime}}</text>
+        </view>
+        <view class="bottom-line">
+          <text class="last-msg">{{item.lastMsg}}</text>
+          <view wx:if="{{item.muted}}" class="mute-icon">🔇</view>
+        </view>
+      </view>
+    </view>
+  </block>
+  <view wx:if="{{chatList.length === 0}}" class="empty-tip">暂无聊天记录</view>
+</view>

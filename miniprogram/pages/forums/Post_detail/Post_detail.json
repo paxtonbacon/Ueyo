@@ -1,0 +1,6 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "comment-section": "/components/comments/comments"
+  }
+}

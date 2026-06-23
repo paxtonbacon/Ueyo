@@ -1,21 +1,27 @@
 <!--components/reward-list/reward-list.wxml-->
 <view class="reward-grid">
   <view class="card" wx:for="{{list}}" wx:key="id" bindtap="onCardTap" data-id="{{item.id}}">
-    <!-- 求购标题 -->
-    <text class="card-title">{{item.title}}</text>
+    <!-- 悬赏图片（新增） -->
+    <image class="card-image" src="{{item.image}}" mode="widthFix" lazy-load></image>
     
-    <!-- 求购描述 -->
-    <text class="card-desc">{{item.desc}}</text>
-    
-    <!-- 价格区间 -->
-    <view class="price-row">
-      <text class="price-range">¥{{item.minPrice}}~{{item.maxPrice}}</text>
-    </view>
-    
-    <!-- 买家信息（点击跳转主页） -->
-    <view class="buyer-row" catchtap="onBuyerTap" data-buyer-id="{{item.buyerId}}">
-      <image class="buyer-avatar" src="{{item.buyerAvatar}}" mode="aspectFill"></image>
-      <text class="buyer-name">{{item.buyerName}}</text>
+    <!-- 内容区域（添加内边距） -->
+    <view class="card-content">
+      <!-- 求购标题 -->
+      <text class="card-title">{{item.title}}</text>
+      
+      <!-- 求购描述 -->
+      <!-- <text class="card-desc">{{item.desc}}</text> -->
+      
+      <!-- 价格区间 -->
+      <view class="price-row">
+        <text class="price-range">¥{{item.minPrice}}~{{item.maxPrice}}</text>
+      </view>
+      
+      <!-- 买家信息 -->
+      <view class="buyer-row" catchtap="onBuyerTap" data-buyer-id="{{item.buyerId}}">
+        <image class="buyer-avatar" src="{{item.buyerAvatar}}" mode="aspectFill"></image>
+        <text class="buyer-name">{{item.buyerName}}</text>
+      </view>
     </view>
   </view>
 </view>
