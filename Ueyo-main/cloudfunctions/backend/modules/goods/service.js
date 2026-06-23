@@ -1,15 +1,15 @@
 // modules/goods/service.js
-const { validateGoodsId } = require('./validator')
+const { generateDescription } = require('../../utils/aiClient')
+const { validateGoodsId, validatePublish } = require('./validator')
 
-// ========== 枚举值白名单（与数据库模型严格对齐） ==========
+// ========== 枚举白名单（与数据库模型严格对齐） ==========
 const CONDITION_MAP = { '1': true, '2': true, '3': true, '4': true }
 const TRADE_TYPE_MAP = { '1': true, '2': true, '3': true }
 const STATUS_MAP = { '1': true, '2': true, '3': true, '4': true }
 
-// ========== 工具函数：校验枚举值 ==========
 const isValidEnum = (value, map) => map[value] === true
 
-// ========== 商品发布（带完整手写校验） ==========
+// ========== 1. 商品发布 ==========
 async function publishGoods(event) {
   const db = event.db
   const OPENID = event.OPENID
@@ -18,47 +18,16 @@ async function publishGoods(event) {
     condition, tradeType, images, video, tags, attrs 
   } = event.data || {}
 
-  // ----- 必填字段校验 -----
-  if (!title || typeof title !== 'string' || title.trim().length === 0) {
-    throw new Error('商品标题不能为空')
-  }
-  if (title.length > 120) {
-    throw new Error('商品标题不能超过120个字符')
-  }
-  if (!category || typeof category !== 'string') {
-    throw new Error('一级分类不能为空')
-  }
-  if (!subCategory || typeof subCategory !== 'string') {
-    throw new Error('二级分类不能为空')
-  }
-  if (price === undefined || price === null || typeof price !== 'number' || price < 0) {
-    throw new Error('价格必须为非负数字')
-  }
-  if (!images || !Array.isArray(images) || images.length === 0) {
-    throw new Error('至少上传一张图片')
-  }
-  if (images.length > 5) {
-    throw new Error('图片最多5张')
-  }
+  // 校验（使用导入的 validatePublish）
+  validatePublish(event.data)
 
-  // ----- 枚举值校验 -----
-  if (!isValidEnum(condition, CONDITION_MAP)) {
-    throw new Error(`新旧程度必须为 1-4，当前值: ${condition}`)
-  }
-  if (!isValidEnum(tradeType, TRADE_TYPE_MAP)) {
-    throw new Error(`交易方式必须为 1-3，当前值: ${tradeType}`)
-  }
+  if (!OPENID) throw new Error('无法获取当前用户身份，请重新登录')
 
-  // ----- 金额转分（防止浮点误差） -----
+  // 金额转分
   const priceInFen = Math.round(price * 100)
   const originalPriceInFen = originalPrice ? Math.round(originalPrice * 100) : undefined
 
-  // ----- 关联字段校验 -----
-  if (!OPENID) {
-    throw new Error('无法获取当前用户身份，请重新登录')
-  }
-
-  // ----- 写入数据库 -----
+  // 写入数据库
   const result = await db.collection('goods').add({
     data: {
       title: title.trim(),
@@ -69,7 +38,7 @@ async function publishGoods(event) {
       originalPrice: originalPriceInFen,
       condition,
       tradeType,
-      status: '1',  // 默认在售
+      status: '1',
       images,
       video: video || '',
       tags: tags || [],
@@ -82,15 +51,15 @@ async function publishGoods(event) {
 
   return {
     goodsId: result._id,
-    message: '商品发布成功（已通过校验）'
+    message: '商品发布成功'
   }
 }
 
-// ========== 商品详情（保持原样，无需改动） ==========
+// ========== 2. 商品详情 ==========
 async function getGoodsDetail(event) {
   const db = event.db
   const { GoodId } = event.data || {}
-  validateGoodsId(GoodId)
+  validateGoodsId(GoodId)  // 使用导入的 validateGoodsId
 
   const goodsRes = await db.collection('goods').doc(GoodId).get()
   const goods = goodsRes.data
@@ -104,7 +73,7 @@ async function getGoodsDetail(event) {
     } catch (e) { /* 忽略 */ }
   }
 
-  // 评论查询（如有 topics 集合）
+  // 评论查询
   let comments = []
   try {
     const commentsRes = await db.collection('topics')
@@ -135,6 +104,7 @@ async function getGoodsDetail(event) {
     }
   } catch (e) { /* 忽略 */ }
 
+  // 推荐商品
   let recommendGoods = { goods_num: 0, goods_list: [] }
   if (goods.category) {
     try {
@@ -180,7 +150,7 @@ async function getGoodsDetail(event) {
   }
 }
 
-// ========== 商品列表（保持原样） ==========
+// ========== 3. 商品列表 ==========
 async function getGoodsList(event) {
   const db = event.db
   const { page = 1, pageSize = 10, category, keyword } = event.data || {}
@@ -214,4 +184,34 @@ async function getGoodsList(event) {
   }
 }
 
-module.exports = { getGoodsDetail, getGoodsList, publishGoods }
+// ========== 4. AI 生成商品描述 ==========
+async function generateGoodsDescription(event) {
+  const { title, user_brief, price, condition } = event.data || {}
+
+  if (!title || typeof title !== 'string' || title.trim().length === 0) {
+    throw new Error('标题不能为空')
+  }
+  if (price === undefined || price === null || typeof price !== 'number' || price < 0) {
+    throw new Error('价格必须为非负数字')
+  }
+
+  const description = await generateDescription({
+    title: title.trim(),
+    user_brief: (user_brief || '').trim(),
+    price: price,
+    condition: String(condition || '1')
+  })
+
+  return {
+    description: description,
+    generated: description !== null,
+    message: description ? 'AI 生成成功' : 'AI 生成失败，请手动填写'
+  }
+}
+
+module.exports = {
+  getGoodsDetail,
+  getGoodsList,
+  publishGoods,
+  generateGoodsDescription
+}

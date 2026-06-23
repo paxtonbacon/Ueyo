@@ -10,6 +10,9 @@ const bountyController = require('./modules/bounty/controller')
 const socialController = require('./modules/social/controller')
 // 引入评价控制器
 const reviewController = require('./modules/review/controller')
+// 引入用户和订单控制器
+const userController = require('./modules/user/controller')
+const orderController = require('./modules/order/controller')
 
 const routeMap = {
   'test/ping': async () => ({
@@ -33,7 +36,18 @@ const routeMap = {
   'social/reply/submit': socialController.submitReply,
   'review/submit': reviewController.submitReview,
   'review/list': reviewController.getReviewList,
-  
+   // ===== 用户模块 =====
+   'user/wxlogin': userController.wxLogin,
+   'user/profile': userController.getProfile,
+   'user/updateProfile': userController.updateProfile,
+   'user/favorites': userController.getFavorites,
+   // ===== 订单模块 =====
+   'order/create': orderController.createOrder,
+   'order/list': orderController.getOrderList,
+   'order/detail': orderController.getOrderDetail,
+   'order/cancel': orderController.cancelOrder,
+   'order/confirm': orderController.confirmOrder,
+   'goods/generateDesc': goodsController.generateDescription,
 }
 
 exports.main = async (event, context) => {

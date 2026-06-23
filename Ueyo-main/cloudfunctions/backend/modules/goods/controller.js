@@ -18,3 +18,9 @@ exports.publishGoods = catchAsync(async (event) => {
   const data = await goodsService.publishGoods(event)
   return SUCCESS(data)
 })
+
+// ========== 新增：AI 生成描述 ==========
+exports.generateDescription = catchAsync(async (event) => {
+  const data = await goodsService.generateGoodsDescription(event)
+  return SUCCESS(data)
+})

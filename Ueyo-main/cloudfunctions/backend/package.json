@@ -11,6 +11,7 @@
   "dependencies": {
     "wx-server-sdk": "~3.0.4",
     "tcb-router": "^1.1.0",
-    "@cloudbase/wx-cloud-client-sdk": "^1.7.0"
+    "@cloudbase/wx-cloud-client-sdk": "^1.7.0",
+    "axios": "^1.6.0"
   }
 }
