@@ -1,0 +1,16 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "二手交易小程序后端云函数",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "wx-server-sdk": "~3.0.4",
+    "tcb-router": "^1.1.0",
+    "@cloudbase/wx-cloud-client-sdk": "^1.7.0"
+  }
+}
