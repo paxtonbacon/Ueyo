@@ -138,9 +138,41 @@ async function getFavorites(event) {
   return { goods: goodsList, bounties: [] }
 }
 
+// ========== 5. 切换收藏状态 ==========
+async function toggleFavorite(event) {
+  const db = event.db
+  const OPENID = event.OPENID
+  const { goodsId } = event.data || {}
+  if (!OPENID) throw new Error('用户未登录')
+  if (!goodsId) throw new Error('商品ID不能为空')
+
+  const userRes = await db.collection('users').doc(OPENID).get()
+  const user = userRes.data
+  if (!user) throw new Error('用户不存在')
+
+  const favorites = user.favorites || []
+  const index = favorites.indexOf(goodsId)
+  const _ = db.command
+
+  if (index > -1) {
+    // 取消收藏
+    await db.collection('users').doc(OPENID).update({
+      data: { favorites: _.pull(goodsId) }
+    })
+    return { isFavorited: false, message: '已取消收藏' }
+  } else {
+    // 添加收藏
+    await db.collection('users').doc(OPENID).update({
+      data: { favorites: _.push(goodsId) }
+    })
+    return { isFavorited: true, message: '已收藏' }
+  }
+}
+
 module.exports = {
   wxLogin,
   getProfile,
   updateProfile,
-  getFavorites
+  getFavorites,
+  toggleFavorite
 }

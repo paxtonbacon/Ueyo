@@ -41,19 +41,40 @@ Page({
     });
   },
 
-  // 从缓存加载用户信息
-  loadUserInfo() {
-    const userInfo = wx.getStorageSync('userInfo');
-    if (userInfo) {
-      this.setData({
-        nickname: userInfo.nickname || '',
-        gender: userInfo.gender || '',
-        genderText: this.formatGenderText(userInfo.gender),
-        meetingPoint: userInfo.meetingPoint || '',
-        registerTime: userInfo.registerTime || '',
-        msgSwitch: userInfo.msgSwitch !== undefined ? userInfo.msgSwitch : true,
-        recSwitch: userInfo.recSwitch !== undefined ? userInfo.recSwitch : false
+  // 从云函数加载用户信息
+  async loadUserInfo() {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: { action: 'user/profile', data: {} }
       });
+      const result = res.result;
+      if (result.code === 0 && result.data) {
+        const user = result.data;
+        this.setData({
+          nickname: user.nickName || '',
+          gender: user.gender || '',
+          genderText: this.formatGenderText(user.gender),
+          meetingPoint: user.dormArea || '',
+          registerTime: user.registerTime || '',
+          msgSwitch: user.msgSwitch !== undefined ? user.msgSwitch : true,
+          recSwitch: user.recSwitch !== undefined ? user.recSwitch : false
+        });
+      }
+    } catch (err) {
+      console.error('加载用户信息失败:', err);
+      const userInfo = wx.getStorageSync('userInfo');
+      if (userInfo) {
+        this.setData({
+          nickname: userInfo.nickname || '',
+          gender: userInfo.gender || '',
+          genderText: this.formatGenderText(userInfo.gender),
+          meetingPoint: userInfo.meetingPoint || '',
+          registerTime: userInfo.registerTime || '',
+          msgSwitch: userInfo.msgSwitch !== undefined ? userInfo.msgSwitch : true,
+          recSwitch: userInfo.recSwitch !== undefined ? userInfo.recSwitch : false
+        });
+      }
     }
   },
 
@@ -81,27 +102,54 @@ Page({
     );
   },
 
-  // 保存更改
-  saveChanges(callback) {
-    const userInfo = {
-      nickname: this.data.nickname,
-      gender: this.data.gender,
-      genderText: this.data.genderText,
-      meetingPoint: this.data.meetingPoint,
-      registerTime: this.data.registerTime,
-      msgSwitch: this.data.msgSwitch,
-      recSwitch: this.data.recSwitch
-    };
-    wx.setStorageSync('userInfo', userInfo);
-    this.setData({
-      originalData: this.getCurrentDataSnapshot()
-    });
-    wx.showToast({
-      title: '已保存',
-      icon: 'success',
-      duration: 1200
-    });
-    if (callback) setTimeout(callback, 300);
+  // 保存更改到云函数
+  async saveChanges(callback) {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'user/updateProfile',
+          data: {
+            nickName: this.data.nickname,
+            gender: this.data.gender,
+            dormArea: this.data.meetingPoint
+          }
+        }
+      });
+      const result = res.result;
+      if (result.code === 0) {
+        const userInfo = {
+          nickname: this.data.nickname,
+          gender: this.data.gender,
+          genderText: this.data.genderText,
+          meetingPoint: this.data.meetingPoint,
+          registerTime: this.data.registerTime,
+          msgSwitch: this.data.msgSwitch,
+          recSwitch: this.data.recSwitch
+        };
+        wx.setStorageSync('userInfo', userInfo);
+        this.setData({ originalData: this.getCurrentDataSnapshot() });
+        wx.showToast({ title: '已保存', icon: 'success', duration: 1200 });
+        if (callback) setTimeout(callback, 300);
+      } else {
+        wx.showToast({ title: result.msg || '保存失败', icon: 'none' });
+      }
+    } catch (err) {
+      console.error('保存用户信息失败:', err);
+      const userInfo = {
+        nickname: this.data.nickname,
+        gender: this.data.gender,
+        genderText: this.data.genderText,
+        meetingPoint: this.data.meetingPoint,
+        registerTime: this.data.registerTime,
+        msgSwitch: this.data.msgSwitch,
+        recSwitch: this.data.recSwitch
+      };
+      wx.setStorageSync('userInfo', userInfo);
+      this.setData({ originalData: this.getCurrentDataSnapshot() });
+      wx.showToast({ title: '已保存（本地）', icon: 'success', duration: 1200 });
+      if (callback) setTimeout(callback, 300);
+    }
   },
 
   // 恢复原始数据

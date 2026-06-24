@@ -86,26 +86,27 @@ Page({
     return isValid
   },
 
-  // 模拟注册接口（临时使用）
+  // 注册（暂用微信登录云函数，后续扩展邮箱注册）
   async callRegisterApi(email, password) {
-    return new Promise((resolve, reject) => {
-      console.log('=== 开始注册 ===')
-      console.log('邮箱:', email)
-      console.log('密码:', password)
-      
-      setTimeout(() => {
-        // 模拟成功
-        if (email && password) {
-          resolve({
-            success: true,
-            message: '注册成功',
-            data: { email }
-          })
-        } else {
-          reject(new Error('注册失败，请重试'))
-        }
-      }, 1000)
-    })
+    const loginRes = await new Promise((resolve, reject) => {
+      wx.login({ success: resolve, fail: reject });
+    });
+
+    const res = await wx.cloud.callFunction({
+      name: 'backend',
+      data: {
+        action: 'user/wxlogin',
+        data: { code: loginRes.code, email, password }
+      }
+    });
+
+    const result = res.result;
+    if (result.code === 0) {
+      wx.setStorageSync('isLogin', true);
+      return { success: true, message: '注册成功', data: result.data };
+    } else {
+      throw new Error(result.msg || '注册失败');
+    }
   },
 
   // 处理注册

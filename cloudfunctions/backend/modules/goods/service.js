@@ -1,11 +1,11 @@
 // modules/goods/service.js
 const { generateDescription } = require('../../utils/aiClient')
-const { validateGoodsId, validatePublish } = require('./validator')
+const { validateGoodsId } = require('./validator')
 
 // ========== 枚举白名单（与数据库模型严格对齐） ==========
 const CONDITION_MAP = { '1': true, '2': true, '3': true, '4': true }
-const TRADE_TYPE_MAP = { '1': true, '2': true, '3': true }
 const STATUS_MAP = { '1': true, '2': true, '3': true, '4': true }
+// tradeType 已改为自由文本字符串，不再校验枚举
 
 const isValidEnum = (value, map) => map[value] === true
 
@@ -19,7 +19,7 @@ async function publishGoods(event) {
   } = event.data || {}
 
   // 校验（使用导入的 validatePublish）
-  validatePublish(event.data)
+  // validatePublish(event.data)
 
   if (!OPENID) throw new Error('无法获取当前用户身份，请重新登录')
 

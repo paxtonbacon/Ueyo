@@ -9,6 +9,8 @@
     "goods_4": "/components/publication_detail/goods/4all_down/4all_down",
     "rewards_1": "/components/publication_detail/rewards/1haven_pub/1haven_pub",
     "rewards_2": "/components/publication_detail/rewards/2waited_for_dis/2waited_for_dis",
-    "rewards_3": "/components/publication_detail/rewards/3all_down/3all_down"
+    "rewards_3": "/components/publication_detail/rewards/3all_down/3all_down",
+    "post": "/components/forums_detail/post/post",
+    "topic": "/components/forums_detail/topic/topic"
   }
 }

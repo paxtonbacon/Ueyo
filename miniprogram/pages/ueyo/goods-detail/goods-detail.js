@@ -65,26 +65,44 @@ Page({
     this.setData({ safeAreaBottom });
   },
 
-  // 模拟商品数据（增加 sellerName）
+  // 调用云函数获取商品详情
   async loadGoodsData(id) {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const mockData = {
-      images: [
-        'https://picsum.photos/400/400?random=1',
-        'https://picsum.photos/400/400?random=2',
-        'https://picsum.photos/400/400?random=3'
-      ],
-      price: '129',
-      condition: '9.5',
-      title: '复古运动鞋 限量款 全新未拆',
-      desc: '正品保证，支持专柜验货。鞋码42，颜色黑色。因尺码不合适转卖。',
-      tradeWays: '面交, 快递, 自提',
-      sellerAvatar: 'https://randomuser.me/api/portraits/women/68.jpg',
-      sellerName: '学姐好物铺',   // 模拟昵称
-      sellerId: 'seller_001',
-      comments: []
-    };
-    this.setData({ goodsInfo: mockData });
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'goods/detail',
+          data: { GoodId: id }
+        }
+      });
+      const result = res.result;
+      if (result.code !== 0) {
+        wx.showToast({ title: result.msg || '商品不存在', icon: 'none' });
+        return;
+      }
+      const data = result.data;
+      // 字段映射：云函数 → 页面模板
+      const goodsInfo = {
+        id: id,
+        images: data.PictureCDN || [],
+        price: data.price || '',
+        condition: data.condition || '',
+        title: data.title || '',
+        desc: data.desc || '',
+        tradeWays: data.tradeWays || '',
+        sellerAvatar: data.sellerAvatarCDN || '',
+        sellerName: data.sellerName || '',
+        sellerId: data.sellerId || '',
+        comments: data.comments || []
+      };
+      this.setData({
+        goodsInfo,
+        isFavorited: data.is_favorited || false
+      });
+    } catch (err) {
+      console.error('加载商品详情失败:', err);
+      wx.showToast({ title: '加载失败，请重试', icon: 'none' });
+    }
   },
 
   // 返回上一页
@@ -106,42 +124,67 @@ Page({
   //   wx.showToast({ title: '私信功能开发中', icon: 'none' });
   // }
   
-  // 查询收藏状态（对接后端）
+  // 查询收藏状态（已由云函数 goods/detail 返回 is_favorited）
   async checkFavoriteStatus() {
-    // 模拟：从本地缓存或后端获取当前商品是否已收藏
-    const favorited = wx.getStorageSync(`favor_${this.data.goodsInfo.id}`) || false;
-    this.setData({ isFavorited: favorited });
+    // isFavorited 已在 loadGoodsData 中设置
   },
 
-  // 切换收藏（点击星形）
+  // 切换收藏
   async onToggleFavorite() {
     const newStatus = !this.data.isFavorited;
     this.setData({ isFavorited: newStatus });
-    // 调用后端接口（模拟）
-    if (newStatus) {
-      wx.showToast({ title: '已收藏', icon: 'success', duration: 1000 });
-      // 实际调用：await wx.cloud.callFunction({ name: 'addFavorite', data: { goodsId: this.data.goodsInfo.id } })
-      wx.setStorageSync(`favor_${this.data.goodsInfo.id}`, true);
-    } else {
-      wx.showToast({ title: '已取消收藏', icon: 'none', duration: 1000 });
-      wx.setStorageSync(`favor_${this.data.goodsInfo.id}`, false);
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'user/toggleFavorite',
+          data: { goodsId: this.data.goodsInfo.id }
+        }
+      });
+      if (res.result.code === 0) {
+        wx.showToast({ title: res.result.data?.message || (newStatus ? '已收藏' : '已取消收藏'), icon: 'success', duration: 1000 });
+      }
+    } catch (err) {
+      // 回滚状态
+      this.setData({ isFavorited: !newStatus });
+      wx.showToast({ title: '操作失败', icon: 'none' });
     }
   },
 
-  // 点击立即购买
-  onBuyNow() {
-    const price = this.data.goodsInfo.price;
-    // 可跳转至下单页面或弹出购买面板
+  // 点击立即购买 → 创建订单
+  async onBuyNow() {
+    const goodsInfo = this.data.goodsInfo;
     wx.showModal({
       title: '确认购买',
-      content: `商品价格：¥${price}，是否立即购买？`,
-      success(res) {
+      content: `商品：${goodsInfo.title}\n价格：¥${goodsInfo.price}`,
+      success: async (res) => {
         if (res.confirm) {
-          // 跳转订单确认页等
-          wx.navigateTo({
-            url: `/pages/order/confirm?goodsId=${this.data.goodsInfo.id}&price=${price}`,
-            fail: () => wx.showToast({ title: '订单页开发中', icon: 'none' })
-          });
+          try {
+            const result = await wx.cloud.callFunction({
+              name: 'backend',
+              data: {
+                action: 'order/create',
+                data: {
+                  goodsId: goodsInfo.id,
+                  tradeType: goodsInfo.tradeWays || '面交/快递均可'
+                }
+              }
+            });
+            const ret = result.result;
+            if (ret.code === 0) {
+              wx.showToast({ title: '下单成功', icon: 'success' });
+              setTimeout(() => {
+                wx.navigateTo({
+                  url: `/pages/self/Order/Order`
+                });
+              }, 1000);
+            } else {
+              wx.showToast({ title: ret.msg || '下单失败', icon: 'none' });
+            }
+          } catch (err) {
+            console.error('创建订单失败:', err);
+            wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+          }
         }
       }
     });

@@ -1,0 +1,19 @@
+<!--components/order_detail/rewards/2waited_for_dis/2waited_for_dis.wxml-->
+<view class="waited-dis">
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <image class="card-img" src="{{item.image || '/images/default-goods.png'}}" mode="aspectFill"></image>
+    <view class="card-content">
+      <text class="order-title">{{item.title}}</text>
+      <text class="order-price">悬赏 ¥{{item.amount}}</text>
+      <view class="order-meta">
+        <text class="meta-item" wx:if="{{item.orderNo}}">订单号：{{item.orderNo}}</text>
+      </view>
+      <view class="card-footer">
+        <view class="btn btn-evaluate" bindtap="onEvaluate" data-id="{{item.id}}">进行评价</view>
+      </view>
+    </view>
+  </view>
+  <view wx:if="{{list.length === 0}}" class="empty-state">
+    <text>暂无待评价悬赏</text>
+  </view>
+</view>

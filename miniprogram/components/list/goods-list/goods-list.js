@@ -55,51 +55,35 @@ Component({
       }
     },
 
-    // 模拟/对接云函数的数据获取函数（后续替换为真实云函数调用）
+    // 调用云函数获取商品列表
     fetchDataFromCloud(page, pageSize) {
-      return new Promise((resolve) => {
-        // 模拟网络延迟
-        setTimeout(() => {
-          const hasMore = page < 5;  // 模拟总共5页
-          const list = [];
-          const start = (page - 1) * pageSize;
-          
-          for (let i = 1; i <= pageSize; i++) {
-            const id = start + i;
-            // 随机图片（使用 picsum 获取随机图片，宽高 300*200）
-            const imgId = Math.floor(Math.random() * 200);
-            const image = `https://picsum.photos/300/200?random=${imgId}`;
-            // 随机商品名
-            const titles = ['我超爱的复古运动鞋在这里！！！！哈哈哈', '这是简约双肩包', 'hhhh纯棉T恤', '对对对牛仔裤', '没有灵魂的极乐迪斯科xxxx棒球帽', '帆布鞋', '卫衣', '休闲裤', '手表', '太阳镜'];
-            const title = `${titles[id % titles.length]}`;
-            // 随机价格 30~500
-            const price = (Math.random() * 470 + 30).toFixed(0);
-            // 随机成新 6.0~9.9
-            const condition = (Math.random() * 4 + 6).toFixed(1);
-            // 随机卖家头像（randomuser）
-            const avatarId = Math.floor(Math.random() * 100);
-            const sellerAvatar = `https://randomuser.me/api/portraits/women/${avatarId}.jpg`;
-            // 随机卖家名称
-            const sellerNames = ['淘淘小店', '小王的铺', '老张闲置', '学姐好物', '校园跳蚤', '数码小站', '书虫二手'];
-            const sellerName = sellerNames[Math.floor(Math.random() * sellerNames.length)] + (id % 100);
-            
-            list.push({
-              id: id,
-              image: image,
-              title: title,
-              price: price,
-              condition: condition,
-              sellerId: `seller_${id}`,
-              sellerAvatar: sellerAvatar,
-              sellerName: sellerName
-            });
-          }
-          
-          resolve({
-            list: list,
-            hasMore: hasMore
-          });
-        }, 800);
+      return wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'goods/list',
+          data: { page, pageSize }
+        }
+      }).then(res => {
+        const result = res.result;
+        if (result.code !== 0) {
+          throw new Error(result.msg || '获取商品列表失败');
+        }
+        const cloudList = result.data.goods_list || [];
+        // 字段映射：云函数 → 组件模板
+        const list = cloudList.map(item => ({
+          id: item.id,
+          image: item.firstPictureCDN || '',
+          title: item.title || '',
+          price: item.price,
+          condition: item.condition || '',
+          sellerId: item.sellerId || '',
+          sellerAvatar: item.sellerAvatarCDN || '',
+          sellerName: item.sellerName || ''
+        }));
+        return {
+          list,
+          hasMore: list.length >= pageSize
+        };
       });
     },
 

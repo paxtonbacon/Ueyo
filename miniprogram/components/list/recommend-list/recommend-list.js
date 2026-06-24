@@ -45,74 +45,58 @@ Component({
       }
     },
 
-    fetchDataFromCloud(page, pageSize) {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const hasMore = page < 5;
-          const list = [];
-          const start = (page - 1) * pageSize;
-          
-          const goodsTitles = ['复古运动鞋', '简约双肩包', '纯棉T恤', '牛仔裤', '棒球帽', '帆布鞋', '卫衣', '休闲裤', '手表', '太阳镜'];
-          const rewardTitles = ['求购二手自行车', '收一台笔记本电脑', '求租校园卡', '买考研资料', '收iPhone12', '求购电动车', '收购旧书', '求带饭卡'];
-          const rewardDescs = ['八九成新即可', '预算充足，要求无修', '长期使用，诚信求租', '全套笔记最好', '原装无拆修', '续航好', '教材教辅', '价格好商量'];
-          
-          for (let i = 1; i <= pageSize; i++) {
-            const id = start + i;
-            const isGoods = Math.random() > 0.5;
-            
-            // 随机图片（商品和悬赏都用同一来源）
-            const imgId = Math.floor(Math.random() * 200);
-            const image = `https://picsum.photos/300/200?random=${imgId}`;
-            
-            if (isGoods) {
-              const title = `${goodsTitles[id % goodsTitles.length]}`;
-              const price = (Math.random() * 470 + 30).toFixed(0);
-              const condition = (Math.random() * 4 + 6).toFixed(1);
-              const sellerId = `seller_${id}`;
-              const avatarId = Math.floor(Math.random() * 100);
-              const sellerAvatar = `https://randomuser.me/api/portraits/women/${avatarId}.jpg`;
-              const sellerNames = ['淘淘小店', '小王的铺', '老张闲置', '学姐好物', '校园跳蚤', '数码小站', '书虫二手'];
-              const sellerName = sellerNames[Math.floor(Math.random() * sellerNames.length)];
-              
-              list.push({
-                type: 'goods',
-                id,
-                image,          // 商品图片
-                title,
-                price,
-                condition,
-                sellerId,
-                sellerAvatar,
-                sellerName
-              });
-            } else {
-              const title = `${rewardTitles[id % rewardTitles.length]}`;
-              const desc = rewardDescs[id % rewardDescs.length] + (Math.random() > 0.5 ? '，有意联系' : '');
-              const minPrice = (Math.random() * 200 + 20).toFixed(0);
-              const maxPrice = (Number(minPrice) + Math.random() * 300 + 50).toFixed(0);
-              const buyerId = `buyer_${id}`;
-              const avatarId = Math.floor(Math.random() * 100);
-              const buyerAvatar = `https://randomuser.me/api/portraits/men/${avatarId}.jpg`;
-              const buyerNames = ['小明同学', '热心学姐', '校园小能手', '诚信买家', '小李', '小赵', '小周', '老吴'];
-              const buyerName = buyerNames[Math.floor(Math.random() * buyerNames.length)];
-              
-              list.push({
-                type: 'reward',
-                id,
-                image,          // 悬赏也添加图片
-                title,
-                desc,
-                minPrice,
-                maxPrice,
-                buyerId,
-                buyerAvatar,
-                buyerName
-              });
-            }
-          }
-          resolve({ list, hasMore });
-        }, 800);
-      });
+    // 调用云函数获取推荐（商品+悬赏混排）
+    async fetchDataFromCloud(page, pageSize) {
+      const halfSize = Math.ceil(pageSize / 2);
+      const [goodsRes, bountyRes] = await Promise.all([
+        wx.cloud.callFunction({ name: 'backend', data: { action: 'goods/list', data: { page, pageSize: halfSize } } }),
+        wx.cloud.callFunction({ name: 'backend', data: { action: 'bounty/list', data: { page, pageSize: halfSize } } })
+      ]);
+
+      const list = [];
+
+      // 映射商品
+      const goodsData = goodsRes.result;
+      if (goodsData.code === 0) {
+        (goodsData.data.goods_list || []).forEach(item => {
+          list.push({
+            type: 'goods',
+            id: item.id,
+            image: item.firstPictureCDN || '',
+            title: item.title || '',
+            price: item.price,
+            condition: item.condition || '',
+            sellerId: item.sellerId || '',
+            sellerAvatar: item.sellerAvatarCDN || '',
+            sellerName: item.sellerName || ''
+          });
+        });
+      }
+
+      // 映射悬赏
+      const bountyData = bountyRes.result;
+      if (bountyData.code === 0) {
+        (bountyData.data.rewards_list || []).forEach(item => {
+          list.push({
+            type: 'reward',
+            id: item.id,
+            image: item.firstPictureCDN || '',
+            title: item.title || '',
+            desc: '',
+            minPrice: item.price ? item.price.min : 0,
+            maxPrice: item.price ? item.price.max : 0,
+            buyerId: item.sellerId || '',
+            buyerAvatar: item.sellerAvatarCDN || '',
+            buyerName: item.sellerName || ''
+          });
+        });
+      }
+
+      // 混排后返回
+      return {
+        list,
+        hasMore: list.length >= pageSize
+      };
     },
 
     onSellerTap(e) {

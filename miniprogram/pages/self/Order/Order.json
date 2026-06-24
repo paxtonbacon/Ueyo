@@ -2,6 +2,13 @@
   "usingComponents": {
     "navigation-bar": "/components/navigation-bar/navigation-bar",
     "tab-container-no-space": "/components/tab-container-no-space/tab-container-no-space",
-    "tab-container": "/components/tab-container/tab-container"
+    "tab-container": "/components/tab-container/tab-container",
+    "order_g1": "/components/order_detail/goods/1waited_for_pay/1waited_for_pay",
+    "order_g2": "/components/order_detail/goods/2waited_for_get/2waited_for_get",
+    "order_g3": "/components/order_detail/goods/3waited_for_dis/3waited_for_dis",
+    "order_g4": "/components/order_detail/goods/4have_down/4have_down",
+    "order_r1": "/components/order_detail/rewards/1waited_for_do/1waited_for_do",
+    "order_r2": "/components/order_detail/rewards/2waited_for_dis/2waited_for_dis",
+    "order_r3": "/components/order_detail/rewards/3have_down/3have_down"
   }
 }

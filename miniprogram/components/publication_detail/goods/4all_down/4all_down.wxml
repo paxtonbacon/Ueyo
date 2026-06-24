@@ -1,2 +1,26 @@
 <!--components/publication_detail/goods/4all_down/4all_down.wxml-->
-<text>components/publication_detail/goods/4all_down/4all_down.wxml</text>
+<view class="all-down">
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <!-- 左侧图片 -->
+    <image class="card-img" src="{{item.image || '/images/default-goods.png'}}" mode="aspectFill"></image>
+    <!-- 右侧内容 -->
+    <view class="card-content">
+      <!-- 第一行：名称 -->
+      <text class="goods-name">{{item.name}}</text>
+      <!-- 第二行：价格 -->
+      <text class="goods-price">¥{{item.price}}</text>
+      <!-- 第三行：新旧程度、交易方式 -->
+      <view class="goods-meta">
+        <text class="meta-item" wx:if="{{item.condition}}">{{item.condition}}成新</text>
+        <text class="meta-item" wx:if="{{item.tradeType}}">{{item.tradeType}}</text>
+      </view>
+      <!-- 底部状态文字 -->
+      <view class="card-footer">
+        <text class="status-text">最终状态：{{item.finalStatus || '已完成'}}</text>
+      </view>
+    </view>
+  </view>
+  <view wx:if="{{list.length === 0}}" class="empty-state">
+    <text>暂无已完成的商品</text>
+  </view>
+</view>

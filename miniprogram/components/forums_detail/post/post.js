@@ -46,42 +46,35 @@ Component({
       }
     },
 
-    // 模拟网络请求（后续替换为真实接口）
+    // 调用云函数获取帖子列表
     fetchData(page, pageSize) {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const hasMore = page < 5;   // 模拟共5页数据
-          const list = [];
-          const start = (page - 1) * pageSize;
-          const titles = [
-            '绝美风景照', '可爱猫咪日常', '街头摄影', '美食分享', '旅行日记',
-            '穿搭打卡', '运动健身', '读书笔记', '数码评测', '手工艺品'
-          ];
-          for (let i = 1; i <= pageSize; i++) {
-            const id = start + i;
-            const imgId = Math.floor(Math.random() * 200);
-            const image = `https://picsum.photos/300/300?random=${imgId}`;
-            const title = `${titles[id % titles.length]}`;
-            const userId = `user_${id}`;
-            const avatarId = Math.floor(Math.random() * 100);
-            const userAvatar = `https://randomuser.me/api/portraits/women/${avatarId}.jpg`;
-            const userNames = ['小蓝', '小粉', '小绿', '小黄', '小紫', '小橙', '小灰', '小白'];
-            const userName = userNames[Math.floor(Math.random() * userNames.length)];
-            const isLiked = Math.random() > 0.7;
-            const likeCount = Math.floor(Math.random() * 100);
-            list.push({
-              id,
-              image,
-              title,
-              userId,
-              userAvatar,
-              userName,
-              isLiked,
-              likeCount
-            });
-          }
-          resolve({ list, hasMore });
-        }, 800);
+      return wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'social/post/list',
+          data: { page, pageSize }
+        }
+      }).then(res => {
+        const result = res.result;
+        if (result.code !== 0) {
+          throw new Error(result.msg || '获取帖子列表失败');
+        }
+        const cloudList = result.data.posts_list || [];
+        // 字段映射：云函数 → 组件模板
+        const list = cloudList.map(item => ({
+          id: item.id,
+          image: item.firstPictureCDN || '',
+          title: item.title || '',
+          userId: item.posterId || '',
+          userAvatar: item.posterAvatarCDN || '',
+          userName: item.posterName || '',
+          isLiked: item.is_liked || false,
+          likeCount: item.likeCount || 0
+        }));
+        return {
+          list,
+          hasMore: list.length >= pageSize
+        };
       });
     },
 

@@ -39,8 +39,9 @@ async function createOrder(event) {
     createdAt: Date.now()
   }
 
-  if (tradeType === '1' || tradeType === '3') {
-    if (meetLocation) orderData.meetingInfo = { place: meetLocation, time: meetTime || null }
+  // 如有面交地点则记录（tradeType 已改为自由文本，不再用枚举判断）
+  if (meetLocation) {
+    orderData.meetingInfo = { place: meetLocation, time: meetTime || null }
   }
 
   const result = await db.collection('orders').add({ data: orderData })

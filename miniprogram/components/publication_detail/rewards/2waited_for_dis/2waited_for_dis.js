@@ -1,66 +1,32 @@
 // components/publication_detail/rewards/2waited_for_dis/2waited_for_dis.js
-Page({
-
-  /**
-   * 页面的初始数据
-   */
-  data: {
-
+Component({
+  properties: {
+    list: {
+      type: Array,
+      value: []
+    }
   },
-
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onLoad(options) {
-
+  lifetimes: {
+    attached() {
+      if (!this.properties.list || this.properties.list.length === 0) {
+        this.setData({ list: this.getMockData() });
+      }
+    }
   },
-
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide() {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload() {
-
-  },
-
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
-  onPullDownRefresh() {
-
-  },
-
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom() {
-
-  },
-
-  /**
-   * 用户点击右上角分享
-   */
-  onShareAppMessage() {
-
+  methods: {
+    getMockData() {
+      return [
+        { id: 301, title: '求帮忙代取快递', reward: 20, tradeType: '面交', image: '/images/default-goods.png' },
+        { id: 302, title: '求租校园卡一张', reward: 50, tradeType: '均可', image: '/images/default-goods.png' }
+      ];
+    },
+    onFailReport(e) {
+      const id = e.currentTarget.dataset.id;
+      this.triggerEvent('failreport', { id });
+    },
+    onEvaluate(e) {
+      const id = e.currentTarget.dataset.id;
+      this.triggerEvent('evaluate', { id });
+    }
   }
-})
+});

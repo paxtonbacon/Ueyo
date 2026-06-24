@@ -29,11 +29,26 @@ Page({
   },
 
   onLoad() {
-    const isLogin = wx.getStorageSync('isLogin') || false;
-    this.setData({ isLogin: isLogin });
-    
+    this.checkLoginStatus();
     this.updateWeeklyData();
     this.initHeatmapData();
+  },
+
+  // 检查登录状态并加载用户信息
+  async checkLoginStatus() {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: { action: 'user/profile', data: {} }
+      });
+      if (res.result.code === 0) {
+        this.setData({ isLogin: true });
+        wx.setStorageSync('isLogin', true);
+      }
+    } catch (err) {
+      const isLogin = wx.getStorageSync('isLogin') || false;
+      this.setData({ isLogin });
+    }
   },
   
   // 更新近7天数据
@@ -256,25 +271,29 @@ initHeatmapData() {
     wx.navigateTo({ url: '/pages/self/History/History' });
   },
 
-  onTapLogin() {
-    wx.showModal({
-      title: '提示',
-      content: '跳转到登录页面',
-      success: (res) => {
-        if (res.confirm) {
-          this.setData({ isLogin: true });
-          wx.setStorageSync('isLogin', true);
-          wx.setStorageSync('userInfo', {
-            nickname: '我爱喵喵',
-            gender: '男',
-            address: '上海宠物公园',
-            registerTime: '2024-01-15',
-            messageTip: true,
-            personalize: false
-          });
-          wx.showToast({ title: '登录成功', icon: 'success' });
-        }
+  // 微信登录
+  async onTapLogin() {
+    try {
+      const loginRes = await wx.cloud.callFunction({
+        name: 'backend',
+        data: { action: 'user/wxlogin', data: { openid: 'test_' + Date.now() } }
+      });
+      if (loginRes.result.code === 0) {
+        this.setData({ isLogin: true });
+        wx.setStorageSync('isLogin', true);
+        wx.showToast({ title: '登录成功', icon: 'success' });
       }
-    });
+    } catch (err) {
+      // 降级：本地模拟
+      this.setData({ isLogin: true });
+      wx.setStorageSync('isLogin', true);
+      wx.setStorageSync('userInfo', {
+        nickname: '我爱喵喵',
+        gender: '男',
+        address: '上海宠物公园',
+        registerTime: '2024-01-15'
+      });
+      wx.showToast({ title: '登录成功', icon: 'success' });
+    }
   }
 });

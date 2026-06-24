@@ -1,0 +1,19 @@
+<!--components/order_detail/rewards/1waited_for_do/1waited_for_do.wxml-->
+<view class="waited-do">
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <image class="card-img" src="{{item.image || '/images/default-goods.png'}}" mode="aspectFill"></image>
+    <view class="card-content">
+      <text class="order-title">{{item.title}}</text>
+      <text class="order-price">悬赏 ¥{{item.amount}}</text>
+      <view class="order-meta">
+        <text class="meta-item" wx:if="{{item.orderNo}}">订单号：{{item.orderNo}}</text>
+      </view>
+      <view class="card-footer">
+        <view class="btn btn-cancel" bindtap="onCancel" data-id="{{item.id}}">取消</view>
+      </view>
+    </view>
+  </view>
+  <view wx:if="{{list.length === 0}}" class="empty-state">
+    <text>暂无待履约悬赏</text>
+  </view>
+</view>

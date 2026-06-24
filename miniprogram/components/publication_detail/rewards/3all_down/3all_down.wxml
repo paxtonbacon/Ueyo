@@ -1,2 +1,19 @@
 <!--components/publication_detail/rewards/3all_down/3all_down.wxml-->
-<text>components/publication_detail/rewards/3all_down/3all_down.wxml</text>
+<view class="all-down">
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <image class="card-img" src="{{item.image || '/images/default-goods.png'}}" mode="aspectFill"></image>
+    <view class="card-content">
+      <text class="reward-title">{{item.title}}</text>
+      <text class="reward-price">悬赏 ¥{{item.reward}}</text>
+      <view class="reward-meta">
+        <text class="meta-item" wx:if="{{item.tradeType}}">{{item.tradeType}}</text>
+      </view>
+      <view class="card-footer">
+        <text class="status-text">最终状态：{{item.finalStatus || '已完成'}}</text>
+      </view>
+    </view>
+  </view>
+  <view wx:if="{{list.length === 0}}" class="empty-state">
+    <text>暂无已完成的悬赏</text>
+  </view>
+</view>

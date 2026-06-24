@@ -39,7 +39,14 @@
     "components/publication_detail/goods/4all_down/4all_down",
     "components/publication_detail/rewards/1haven_pub/1haven_pub",
     "components/publication_detail/rewards/2waited_for_dis/2waited_for_dis",
-    "components/publication_detail/rewards/3all_down/3all_down"
+    "components/publication_detail/rewards/3all_down/3all_down",
+    "components/order_detail/goods/1waited_for_pay/1waited_for_pay",
+    "components/order_detail/goods/2waited_for_get/2waited_for_get",
+    "components/order_detail/goods/3waited_for_dis/3waited_for_dis",
+    "components/order_detail/goods/4have_down/4have_down",
+    "components/order_detail/rewards/1waited_for_do/1waited_for_do",
+    "components/order_detail/rewards/2waited_for_dis/2waited_for_dis",
+    "components/order_detail/rewards/3have_down/3have_down"
   ],
   "window": {
     "navigationBarTextStyle": "black",

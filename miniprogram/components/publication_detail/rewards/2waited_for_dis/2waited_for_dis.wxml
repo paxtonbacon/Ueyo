@@ -1,2 +1,20 @@
 <!--components/publication_detail/rewards/2waited_for_dis/2waited_for_dis.wxml-->
-<text>components/publication_detail/rewards/2waited_for_dis/2waited_for_dis.wxml</text>
+<view class="waited-dis">
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <image class="card-img" src="{{item.image || '/images/default-goods.png'}}" mode="aspectFill"></image>
+    <view class="card-content">
+      <text class="reward-title">{{item.title}}</text>
+      <text class="reward-price">悬赏 ¥{{item.reward}}</text>
+      <view class="reward-meta">
+        <text class="meta-item" wx:if="{{item.tradeType}}">{{item.tradeType}}</text>
+      </view>
+      <view class="card-footer">
+        <view class="btn btn-fail" bindtap="onFailReport" data-id="{{item.id}}">失败汇报</view>
+        <view class="btn btn-evaluate" bindtap="onEvaluate" data-id="{{item.id}}">进行评价</view>
+      </view>
+    </view>
+  </view>
+  <view wx:if="{{list.length === 0}}" class="empty-state">
+    <text>暂无待评价的悬赏</text>
+  </view>
+</view>

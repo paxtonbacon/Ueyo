@@ -6,6 +6,7 @@ Page({
     title: '',
     description: '',
     imageList: [],
+    imageFileIDs: [],        // 云存储 fileID 列表
     minPrice: '',
     maxPrice: '',
     tradeMethod: '',
@@ -39,8 +40,8 @@ Page({
     this.setData({ description: e.detail.value });
   },
 
-  // 图片上传
-  chooseImage() {
+  // 图片上传（上传到云存储）
+  async chooseImage() {
     const remainCount = 9 - this.data.imageList.length;
     if (remainCount <= 0) {
       wx.showToast({ title: '最多上传9张图片', icon: 'none' });
@@ -50,11 +51,32 @@ Page({
       count: remainCount,
       mediaType: ['image'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
-        const newImages = res.tempFiles.map(file => file.tempFilePath);
-        this.setData({
-          imageList: [...this.data.imageList, ...newImages]
-        });
+      success: async (res) => {
+        wx.showLoading({ title: '上传中...' });
+        const tempFiles = res.tempFiles;
+        const uploadedFileIDs = [];
+        const localPaths = [];
+        try {
+          for (const file of tempFiles) {
+            const cloudPath = `bounties/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+            const uploadRes = await wx.cloud.uploadFile({
+              cloudPath,
+              filePath: file.tempFilePath
+            });
+            uploadedFileIDs.push(uploadRes.fileID);
+            localPaths.push(file.tempFilePath);
+          }
+          this.setData({
+            imageList: [...this.data.imageList, ...localPaths],
+            imageFileIDs: [...this.data.imageFileIDs, ...uploadedFileIDs]
+          });
+          wx.hideLoading();
+          wx.showToast({ title: `上传成功 ${uploadedFileIDs.length} 张`, icon: 'success' });
+        } catch (err) {
+          wx.hideLoading();
+          console.error('上传失败:', err);
+          wx.showToast({ title: '上传失败，请重试', icon: 'none' });
+        }
       }
     });
   },
@@ -62,29 +84,15 @@ Page({
   deleteImage(e) {
     const index = e.currentTarget.dataset.index;
     const newList = [...this.data.imageList];
+    const newFileIDs = [...this.data.imageFileIDs];
     newList.splice(index, 1);
-    this.setData({ imageList: newList });
+    newFileIDs.splice(index, 1);
+    this.setData({ imageList: newList, imageFileIDs: newFileIDs });
   },
 
-  // AI一键填充（模拟：填充描述、价格区间、分类）
+  // AI一键填充（暂不支持悬赏AI生成，提示用户手动填写）
   onAIComplete() {
-    wx.showLoading({ title: 'AI生成中...' });
-    setTimeout(() => {
-      wx.hideLoading();
-      const mockFill = {
-        description: '✨急需此物品，价格可商议，希望尽快成交。有闲置的朋友请联系～',
-        minPrice: '50',
-        maxPrice: '200',
-        category: '宠物用品'
-      };
-      this.setData({
-        description: mockFill.description,
-        minPrice: mockFill.minPrice,
-        maxPrice: mockFill.maxPrice,
-        category: mockFill.category
-      });
-      wx.showToast({ title: 'AI补充完成', icon: 'success' });
-    }, 800);
+    wx.showToast({ title: '请手动填写悬赏描述', icon: 'none' });
   },
 
   // 价格区间输入
@@ -148,9 +156,8 @@ Page({
     this.setData({ category: selected, showRecommend: false });
   },
 
-  // 发布（预留后端接口）
-  onPublish() {
-    // 验证
+  // 发布悬赏（调用云函数 bounty/publish）
+  async onPublish() {
     if (!this.data.title || this.data.title.length < 4) {
       wx.showToast({ title: '标题至少4个字', icon: 'none' });
       return;
@@ -159,7 +166,7 @@ Page({
       wx.showToast({ title: '请填写需求描述', icon: 'none' });
       return;
     }
-    if (this.data.imageList.length === 0) {
+    if (this.data.imageFileIDs.length === 0) {
       wx.showToast({ title: '请上传图片', icon: 'none' });
       return;
     }
@@ -172,28 +179,37 @@ Page({
       return;
     }
 
-    // 构建提交数据（供后端调用）
-    const postData = {
-      title: this.data.title,
-      description: this.data.description,
-      images: this.data.imageList,
-      minPrice: this.data.minPrice,
-      maxPrice: this.data.maxPrice,
-      tradeMethod: this.data.tradeMethod,
-      quantity: this.data.quantity,
-      category: this.data.category
-    };
-    console.log('提交数据:', postData);
-
     wx.showLoading({ title: '发布中...' });
-    // 模拟网络请求，实际替换为 wx.request 或云函数
-    setTimeout(() => {
+
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'bounty/publish',
+          data: {
+            title: this.data.title.trim(),
+            description: this.data.description.trim(),
+            category: this.data.category,
+            expectedPrice: parseFloat(this.data.minPrice) || 0,
+            deliveryRequirement: this.data.tradeMethod || '面交',
+            images: this.data.imageFileIDs
+          }
+        }
+      });
+
       wx.hideLoading();
-      wx.showToast({ title: '发布成功', icon: 'success' });
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1500);
-    }, 1000);
+      const result = res.result;
+      if (result.code === 0) {
+        wx.showToast({ title: result.data?.message || '发布成功', icon: 'success' });
+        setTimeout(() => wx.navigateBack(), 1500);
+      } else {
+        wx.showToast({ title: result.msg || '发布失败', icon: 'none' });
+      }
+    } catch (err) {
+      wx.hideLoading();
+      console.error('发布悬赏失败:', err);
+      wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
   },
 
   // 返回（带未保存提示）

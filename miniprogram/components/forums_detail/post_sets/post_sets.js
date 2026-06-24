@@ -1,5 +1,12 @@
 // components/forums_detail/post_sets/post_sets.js
 Component({
+  properties: {
+    // 话题ID（从父页面传入）
+    topicId: {
+      type: String,
+      value: ''
+    }
+  },
   data: {
     topicInfo: {
       title: '',
@@ -15,21 +22,59 @@ Component({
   },
   lifetimes: {
     attached() {
-      this.loadTopicInfo();
-      this.loadData(true);
+      this.loadTopicInfo(); // loadTopicInfo 已包含首页帖子加载
     }
   },
   methods: {
-    // 加载话题头部信息（模拟）
+    // 加载话题头部信息 + 帖子列表（调用云函数 social/topic/posts）
     loadTopicInfo() {
-      const mockTopic = {
-        title: '洛克王国最好玩！',
-        desc: '交流洛克王国的相关帖子和内容，进行即时消息和相关交易',
-        adminAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-        adminName: '鸭吉吉'
-      };
-      this.setData({ topicInfo: mockTopic });
-      // 后续可改为从接口获取
+      const topicId = this.properties.topicId || this.data.topicId;
+      if (!topicId) {
+        console.warn('post_sets: 缺少 topicId');
+        return;
+      }
+      return wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'social/topic/posts',
+          data: { TopicId: topicId, page: 1, pageSize: 10 }
+        }
+      }).then(res => {
+        const result = res.result;
+        if (result.code !== 0) {
+          throw new Error(result.msg || '获取话题信息失败');
+        }
+        const data = result.data;
+        this.setData({
+          topicInfo: {
+            title: data.topic_title || '',
+            desc: data.topic_desc || '',
+            adminAvatar: data.adminAvatarCDN || '',
+            adminName: data.adminName || ''
+          }
+        });
+        // 同时填充帖子列表
+        const cloudList = data.posts_list || [];
+        const list = cloudList.map(item => ({
+          id: item.id,
+          userAvatar: item.posterAvatarCDN || '',
+          userName: item.posterName || '',
+          postTime: item.postTime || '',
+          title: item.title || '',
+          content: item.desc || '',
+          images: item.PictureCDN || [],
+          isLiked: item.is_liked || false,
+          likeCount: item.likeCount || 0,
+          commentCount: item.commentCount || 0
+        }));
+        this.setData({
+          list,
+          page: 2,
+          hasMore: list.length >= 10
+        });
+      }).catch(err => {
+        console.error('加载话题数据失败:', err);
+      });
     },
 
     async loadData(refresh) {
@@ -52,62 +97,40 @@ Component({
       }
     },
 
-    // 模拟获取帖子数据（后续替换为真实接口）
+    // 加载更多帖子（调用云函数 social/topic/posts）
     fetchPosts(page, pageSize) {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const hasMore = page < 5;
-          const list = [];
-          const start = (page - 1) * pageSize;
-          // 随机头像池
-          const avatars = [
-            'https://randomuser.me/api/portraits/women/1.jpg',
-            'https://randomuser.me/api/portraits/men/2.jpg',
-            'https://randomuser.me/api/portraits/women/3.jpg',
-            'https://randomuser.me/api/portraits/men/4.jpg'
-          ];
-          const userNames = ['小蓝同学', '粉色学姐', '绿野仙踪', '大黄蜂', '紫韵', '橙子', '灰太狼', '小白兔'];
-          const titles = [
-            '求购二手自行车', '出闲置考研资料', '有没有一起拼单的', '学校食堂哪家强',
-            '转租暑期单间', '收一台显示器', '出手工做的饰品', '求推荐好用的笔'
-          ];
-          const contents = [
-            '想买一辆二手自行车，价格在200以内，能正常骑行即可，有出的同学请联系我。',
-            '去年考研用的数学、英语资料，几乎全新，低价出，可小刀。',
-            '想拼单买水果，有没有小伙伴一起？量大便宜。',
-            '食堂三楼的麻辣烫真不错，大家觉得呢？',
-            '暑假回家，单间转租两个月，靠近南门，有空调。',
-            '收一台24寸以上显示器，用于写代码，要求无坏点。',
-            '手工制作了一些小饰品，有兴趣的可以看看。',
-            '求推荐一款好用不贵的签字笔，写感顺滑。'
-          ];
-          // 随机图片（模拟三张）
-          const imgIds = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
-          for (let i = 1; i <= pageSize; i++) {
-            const id = start + i;
-            // 随机生成1~3张图片
-            const imageCount = Math.floor(Math.random() * 3) + 1;
-            const images = [];
-            for (let j = 0; j < imageCount; j++) {
-              const idx = (id + j) % imgIds.length;
-              images.push(`https://picsum.photos/200/150?random=${imgIds[idx]}`);
-            }
-            list.push({
-              id: id,
-              userAvatar: avatars[id % avatars.length],
-              userName: userNames[id % userNames.length] + (id % 100),
-              postTime: `${Math.floor(Math.random() * 24)}小时前`,
-              title: titles[id % titles.length],
-              content: contents[id % contents.length] + (Math.random() > 0.5 ? '（补充：可面交，可刀）' : ''),
-              images: images,
-              isLiked: Math.random() > 0.7,
-              likeCount: Math.floor(Math.random() * 80),
-              commentCount: Math.floor(Math.random() * 40)
-            });
-          }
-          resolve({ list, hasMore });
-        }, 800);
+      const topicId = this.properties.topicId || this.data.topicId;
+      if (!topicId) {
+        return Promise.resolve({ list: [], hasMore: false });
+      }
+      return wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'social/topic/posts',
+          data: { TopicId: topicId, page, pageSize }
+        }
+      }).then(res => {
+        const result = res.result;
+        if (result.code !== 0) {
+          throw new Error(result.msg || '加载更多帖子失败');
+        }
+        const cloudList = result.data.posts_list || [];
+        const list = cloudList.map(item => ({
+          id: item.id,
+          userAvatar: item.posterAvatarCDN || '',
+          userName: item.posterName || '',
+          postTime: item.postTime || '',
+          title: item.title || '',
+          content: item.desc || '',
+          images: item.PictureCDN || [],
+          isLiked: item.is_liked || false,
+          likeCount: item.likeCount || 0,
+          commentCount: item.commentCount || 0
+        }));
+        return {
+          list,
+          hasMore: list.length >= pageSize
+        };
       });
     },
 

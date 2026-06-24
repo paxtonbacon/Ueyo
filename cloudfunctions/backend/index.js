@@ -10,6 +10,8 @@ const bountyController = require('./modules/bounty/controller')
 const socialController = require('./modules/social/controller')
 // 引入评价控制器
 const reviewController = require('./modules/review/controller')
+// 引入消息控制器
+const messageController = require('./modules/message/controller')
 // 引入用户和订单控制器
 const userController = require('./modules/user/controller')
 const orderController = require('./modules/order/controller')
@@ -34,6 +36,7 @@ const routeMap = {
   'social/post/detail': socialController.getPostDetail,
   'social/post/publish': socialController.publishPost,
   'social/reply/submit': socialController.submitReply,
+  'social/topic/create': socialController.createTopic,
   'review/submit': reviewController.submitReview,
   'review/list': reviewController.getReviewList,
    // ===== 用户模块 =====
@@ -41,6 +44,7 @@ const routeMap = {
    'user/profile': userController.getProfile,
    'user/updateProfile': userController.updateProfile,
    'user/favorites': userController.getFavorites,
+   'user/toggleFavorite': userController.toggleFavorite,
    // ===== 订单模块 =====
    'order/create': orderController.createOrder,
    'order/list': orderController.getOrderList,
@@ -48,6 +52,10 @@ const routeMap = {
    'order/cancel': orderController.cancelOrder,
    'order/confirm': orderController.confirmOrder,
    'goods/generateDesc': goodsController.generateDescription,
+   // ===== 消息模块 =====
+   'message/conversations': messageController.getConversations,
+   'message/list': messageController.getMessages,
+   'message/send': messageController.sendMessage,
 }
 
 exports.main = async (event, context) => {

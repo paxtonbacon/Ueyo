@@ -3,7 +3,8 @@ Page({
   data: {
     title: '',
     introduction: '',
-    imageList: []
+    imageList: [],
+    imageFileIDs: []     // 云存储 fileID 列表
   },
 
   onLoad() {
@@ -18,7 +19,7 @@ Page({
     this.setData({ introduction: e.detail.value });
   },
 
-  chooseImage() {
+  async chooseImage() {
     const remainCount = 9 - this.data.imageList.length;
     if (remainCount <= 0) {
       wx.showToast({ title: '最多上传9张图片', icon: 'none' });
@@ -28,11 +29,29 @@ Page({
       count: remainCount,
       mediaType: ['image'],
       sourceType: ['album', 'camera'],
-      success: (res) => {
-        const newImages = res.tempFiles.map(file => file.tempFilePath);
-        this.setData({
-          imageList: [...this.data.imageList, ...newImages]
-        });
+      success: async (res) => {
+        wx.showLoading({ title: '上传中...' });
+        const tempFiles = res.tempFiles;
+        const uploadedFileIDs = [];
+        const localPaths = [];
+        try {
+          for (const file of tempFiles) {
+            const cloudPath = `topics/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+            const uploadRes = await wx.cloud.uploadFile({ cloudPath, filePath: file.tempFilePath });
+            uploadedFileIDs.push(uploadRes.fileID);
+            localPaths.push(file.tempFilePath);
+          }
+          this.setData({
+            imageList: [...this.data.imageList, ...localPaths],
+            imageFileIDs: [...this.data.imageFileIDs, ...uploadedFileIDs]
+          });
+          wx.hideLoading();
+          wx.showToast({ title: `上传成功 ${uploadedFileIDs.length} 张`, icon: 'success' });
+        } catch (err) {
+          wx.hideLoading();
+          console.error('上传失败:', err);
+          wx.showToast({ title: '上传失败，请重试', icon: 'none' });
+        }
       }
     });
   },
@@ -40,11 +59,13 @@ Page({
   deleteImage(e) {
     const index = e.currentTarget.dataset.index;
     const newList = [...this.data.imageList];
+    const newFileIDs = [...this.data.imageFileIDs];
     newList.splice(index, 1);
-    this.setData({ imageList: newList });
+    newFileIDs.splice(index, 1);
+    this.setData({ imageList: newList, imageFileIDs: newFileIDs });
   },
 
-  onPublish() {
+  async onPublish() {
     if (!this.data.title || this.data.title.length < 4) {
       wx.showToast({ title: '标题至少4个字', icon: 'none' });
       return;
@@ -53,20 +74,37 @@ Page({
       wx.showToast({ title: '请填写话题简介', icon: 'none' });
       return;
     }
-    if (this.data.imageList.length === 0) {
+    if (this.data.imageFileIDs.length === 0) {
       wx.showToast({ title: '请上传图片', icon: 'none' });
       return;
     }
 
     wx.showLoading({ title: '发布中...' });
-    // 模拟网络请求，实际替换为 wx.request 或云函数
-    setTimeout(() => {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'social/topic/create',
+          data: {
+            title: this.data.title.trim(),
+            introduction: this.data.introduction.trim(),
+            images: this.data.imageFileIDs
+          }
+        }
+      });
       wx.hideLoading();
-      wx.showToast({ title: '发布成功', icon: 'success' });
-      setTimeout(() => {
-        wx.navigateBack();
-      }, 1500);
-    }, 1000);
+      const result = res.result;
+      if (result.code === 0) {
+        wx.showToast({ title: result.data?.message || '发布成功', icon: 'success' });
+        setTimeout(() => wx.navigateBack(), 1500);
+      } else {
+        wx.showToast({ title: result.msg || '发布失败', icon: 'none' });
+      }
+    } catch (err) {
+      wx.hideLoading();
+      console.error('创建话题失败:', err);
+      wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+    }
   },
 
   goBack() {

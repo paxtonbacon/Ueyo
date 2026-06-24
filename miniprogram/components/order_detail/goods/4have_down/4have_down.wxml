@@ -1,0 +1,19 @@
+<!--components/order_detail/goods/4have_down/4have_down.wxml-->
+<view class="have-down">
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <image class="card-img" src="{{item.image || '/images/default-goods.png'}}" mode="aspectFill"></image>
+    <view class="card-content">
+      <text class="order-title">{{item.title}}</text>
+      <text class="order-price">¥{{item.amount}}</text>
+      <view class="order-meta">
+        <text class="meta-item" wx:if="{{item.orderNo}}">订单号：{{item.orderNo}}</text>
+      </view>
+      <view class="card-footer">
+        <text class="status-text">最终状态：{{item.finalStatus || '已完成'}}</text>
+      </view>
+    </view>
+  </view>
+  <view wx:if="{{list.length === 0}}" class="empty-state">
+    <text>暂无已完成订单</text>
+  </view>
+</view>

@@ -45,57 +45,33 @@ Component({
     },
 
     /**
-     * 获取话题数据（Mock 实现）
+     * 获取话题数据（调用云函数）
      * @returns {Promise<Array>}
      */
     fetchTopicsData() {
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          const mockData = this.generateMockTopics();
-          resolve(mockData);
-        }, 200);
+      return wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'social/topic/list',
+          data: { page: 1, pageSize: 20 }
+        }
+      }).then(res => {
+        const result = res.result;
+        if (result.code !== 0) {
+          throw new Error(result.msg || '获取话题列表失败');
+        }
+        const topicList = result.data.topic_list || [];
+        // 字段映射：云函数 → 组件模板
+        return topicList.map(item => ({
+          id: item.id,
+          title: item.title || '',
+          desc: item.desc || '',
+          posts: (item.four_postlist || []).map(p => ({
+            titleSnippet: p.title || '',
+            coverImage: p.postCDN || ''
+          }))
+        }));
       });
-    },
-
-    /**
-     * 生成 Mock 话题数据集（与原示例相同，但为每个话题增加唯一 id）
-     */
-    generateMockTopics() {
-      const topic1 = {
-        id: 'topic_001',
-        title: '摄影爱好者社群',
-        desc: '天南海北，一镜到底！览百般胜景，汇千番精彩。',
-        posts: [
-          { titleSnippet: '小程序云开发入门实战：快速搭建待办事项应用', coverImage: 'https://picsum.photos/id/10/300/200' },
-          { titleSnippet: '掌握自定义组件，提升代码复用性与可维护性', coverImage: 'https://picsum.photos/id/20/300/200' },
-          { titleSnippet: '性能优化指南：从启动速度到页面渲染全解析', coverImage: 'https://picsum.photos/id/30/300/200' },
-          { titleSnippet: '使用 Canvas 2D 实现炫酷图表与数据可视化', coverImage: 'https://picsum.photos/id/40/300/200' },
-          { titleSnippet: '小程序中的状态管理方案对比（MobX vs 自研）', coverImage: 'https://picsum.photos/id/50/300/200' }
-        ]
-      };
-      const topic2 = {
-        id: 'topic_002',
-        title: '编程+AI，时代缔造者',
-        desc: '整理 GitHub、在线课程、技术社区等优质资源，助你高效入门编程。',
-        posts: [
-          { titleSnippet: '免费编程书籍大全：从 Python 到机器学习', coverImage: 'https://picsum.photos/id/100/300/200' },
-          { titleSnippet: '菜鸟教程 vs W3School：新手该选哪个？', coverImage: 'https://picsum.photos/id/101/300/200' },
-          { titleSnippet: 'GitHub 上星标过万的开源学习路线图合集', coverImage: 'https://picsum.photos/id/102/300/200' },
-          { titleSnippet: 'Vue 与 React 入门对比：2024 新手选择指南', coverImage: 'https://picsum.photos/id/104/300/200' }
-        ]
-      };
-      const topic3 = {
-        id: 'topic_003',
-        title: '来玩洛克王国！',
-        desc: '整理 GitHub、在线课程、技术社区等优质资源，助你高效入门编程。',
-        posts: [
-          { titleSnippet: '免费编程书籍大全：从 Python 到机器学习', coverImage: 'https://picsum.photos/id/109/300/200' },
-          { titleSnippet: '菜鸟教程 vs W3School：新手该选哪个？', coverImage: 'https://picsum.photos/id/106/300/200' },
-          { titleSnippet: 'GitHub 上星标过万的开源学习路线图合集', coverImage: 'https://picsum.photos/id/110/300/200' },
-          { titleSnippet: 'Vue 与 React 入门对比：2024 新手选择指南', coverImage: 'https://picsum.photos/id/108/300/200' }
-        ]
-      };
-      return [topic1, topic2, topic3];
     },
 
     /**

@@ -41,31 +41,30 @@ Page({
     });
   },
 
-  // ========== 消息数据封装函数（后续可替换为真实接口） ==========
-  /**
-   * 获取聊天记录
-   * @param {string} userId 对方用户ID
-   * @returns {Array} 消息列表
-   */
-  getMessagesByUserId(userId) {
-    // 这里可以根据 userId 返回不同的 mock 数据，或从本地存储/后端获取
-    // 目前返回通用示例，实际可扩展为异步请求
-    const baseMessages = [
-      { id: '1', from: 'other', content: '你好，在吗？', time: '10:00', avatar: this.data.targetUser.avatar },
-      { id: '2', from: 'self', content: '在的，有什么事？', time: '10:02', avatar: this.data.myAvatar },
-      { id: '3', from: 'other', content: '想和你讨论一下项目进度', time: '10:03', avatar: this.data.targetUser.avatar },
-      { id: '4', from: 'self', content: '好的，你说', time: '10:05', avatar: this.data.myAvatar }
-    ]
-    // 如果 userId 不同，可以在这里区分
-    return baseMessages
-  },
+  // ========== 消息数据（已由云函数 message/list 提供） ==========
 
+  // 从云函数加载聊天消息
   async loadMessages() {
-    // 调用封装函数获取消息（同步或异步）
-    const messages = this.getMessagesByUserId(this.data.targetUser.id)
-    this.setData({ messageList: messages }, () => {
-      this.scrollToBottom()
-    })
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'message/list',
+          data: { targetUserId: this.data.targetUser.id, page: 1, pageSize: 50 }
+        }
+      });
+      if (res.result.code === 0) {
+        const msgs = res.result.data.messages || [];
+        if (msgs.length > 0) {
+          this.setData({ messageList: msgs }, () => this.scrollToBottom());
+          return;
+        }
+      }
+    } catch (err) {
+      console.error('加载消息失败:', err);
+    }
+    // 降级：空列表
+    this.setData({ messageList: [] });
   },
 
   // 滚动到底部
@@ -78,25 +77,35 @@ Page({
     this.setData({ inputText: e.detail.value })
   },
 
-  // 发送消息（点击键盘发送按钮）
-  onSendMsg() {
-    const content = this.data.inputText.trim()
-    if (!content) return
+  // 发送消息（调用云函数）
+  async onSendMsg() {
+    const content = this.data.inputText.trim();
+    if (!content) return;
+
     const newMsg = {
       id: Date.now().toString(),
       from: 'self',
       content: content,
       time: this.getCurrentTime(),
       avatar: this.data.myAvatar
-    }
-    const newList = [...this.data.messageList, newMsg]
+    };
+    // 乐观更新
     this.setData({
-      messageList: newList,
+      messageList: [...this.data.messageList, newMsg],
       inputText: ''
-    }, () => {
-      this.scrollToBottom()
-    })
-    // 可在此调用后端接口发送消息
+    }, () => this.scrollToBottom());
+
+    try {
+      await wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'message/send',
+          data: { targetUserId: this.data.targetUser.id, content }
+        }
+      });
+    } catch (err) {
+      console.error('发送消息失败:', err);
+    }
   },
 
   // 获取当前时间 HH:MM

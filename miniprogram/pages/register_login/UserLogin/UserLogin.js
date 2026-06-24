@@ -57,27 +57,39 @@ Page({
     return isValid
   },
 
-  // 模拟登陆接口（临时使用）
+  // 调用云函数登录
   async callLoginApi(email, password) {
-    return new Promise((resolve, reject) => {
-      console.log('=== 开始注册 ===')
-      console.log('邮箱:', email)
-      console.log('密码:', password)
-      
-      setTimeout(() => {
-        // 模拟成功
-        if (email && password) {
-          resolve({
-            success: true,
-            message: '登陆成功',
-            data: { email }
-          })
+    // 使用 wx.login 获取 code，然后调用云函数
+    const loginRes = await new Promise((resolve, reject) => {
+      wx.login({
+        success: resolve,
+        fail: reject
+      });
+    });
 
-        } else {
-          reject(new Error('登陆失败，请重试'))
+    const res = await wx.cloud.callFunction({
+      name: 'backend',
+      data: {
+        action: 'user/wxlogin',
+        data: {
+          code: loginRes.code,
+          email: email,
+          password: password
         }
-      }, 1000)
-    })
+      }
+    });
+
+    const result = res.result;
+    if (result.code === 0) {
+      wx.setStorageSync('isLogin', true);
+      wx.setStorageSync('userInfo', {
+        nickname: result.data.nickName || '',
+        avatarUrl: result.data.avatarUrl || ''
+      });
+      return { success: true, message: '登录成功', data: result.data };
+    } else {
+      throw new Error(result.msg || '登录失败');
+    }
   },
 
   // 处理登陆

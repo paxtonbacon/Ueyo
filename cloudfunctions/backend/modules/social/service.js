@@ -357,11 +357,47 @@ async function submitReply(event) {
   }
 }
 
+// ========== 7. 创建话题 ==========
+async function createTopic(event) {
+  const db = event.db
+  const OPENID = event.OPENID
+  const { title, introduction, images } = event.data || {}
+
+  if (!title || typeof title !== 'string' || title.trim().length < 2) {
+    throw new Error('话题标题至少2个字')
+  }
+  if (!introduction || typeof introduction !== 'string' || introduction.trim().length === 0) {
+    throw new Error('话题简介不能为空')
+  }
+  if (!OPENID) {
+    throw new Error('无法获取当前用户身份，请重新登录')
+  }
+
+  const result = await db.collection('topics').add({
+    data: {
+      type: '1', // 话题
+      title: title.trim(),
+      content: introduction.trim(),
+      images: images || [],
+      authorInfo: { _id: OPENID },
+      likeCount: 0,
+      postCount: 0,
+      createdAt: Date.now()
+    }
+  })
+
+  return {
+    topicId: result._id,
+    message: '话题创建成功'
+  }
+}
+
 module.exports = {
   getTopicList,
   getPostList,
   getTopicPosts,
   getPostDetail,
   publishPost,
-  submitReply
+  submitReply,
+  createTopic
 }

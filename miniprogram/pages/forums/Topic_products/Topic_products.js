@@ -51,7 +51,7 @@ Page({
   // 悬浮球点击跳转
   onFabTap() {
     wx.navigateTo({
-      url: '/pages/add/Post_add/Post_add',
+      url: `/pages/add/Post_add/Post_add?topicId=${this.data.topicId}`,
       fail: () => {
         wx.showToast({ title: '发布页开发中', icon: 'none' });
       }

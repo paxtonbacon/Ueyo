@@ -1,5 +1,7 @@
 /* pages/message/People/People.wxss */
-/* pages/chatlist/chatlist.wxss */
+.page {
+  height: 100vh;
+}
 .chat-list {
   background-color: #fff;
   height: 100vh;

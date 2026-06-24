@@ -60,25 +60,43 @@ Page({
     this.setData({ safeAreaBottom });
   },
 
+  // 调用云函数获取悬赏详情
   async loadRewardData(id) {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const mockData = {
-      images: [
-        'https://picsum.photos/400/400?random=10',
-        'https://picsum.photos/400/400?random=11',
-        'https://picsum.photos/400/400?random=12'
-      ],
-      minPrice: '50',
-      maxPrice: '200',
-      title: '求购二手自行车一辆',
-      desc: '山地车或普通代步车均可，100元左右，希望七八成新，能正常骑行。',
-      tradeWays: '面交, 自提',
-      buyerAvatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-      buyerName: '热心同学',
-      buyerId: 'buyer_001',
-      comments: []
-    };
-    this.setData({ rewardInfo: mockData });
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'bounty/detail',
+          data: { RewardId: id }
+        }
+      });
+      const result = res.result;
+      if (result.code !== 0) {
+        wx.showToast({ title: result.msg || '悬赏不存在', icon: 'none' });
+        return;
+      }
+      const data = result.data;
+      const rewardInfo = {
+        id: id,
+        images: data.PictureCDN || [],
+        minPrice: data.minprice || '',
+        maxPrice: data.maxprice || '',
+        title: data.title || '',
+        desc: data.desc || '',
+        tradeWays: data.tradeWays || '',
+        buyerAvatar: data.buyerAvatarCDN || '',
+        buyerName: data.buyerName || '',
+        buyerId: data.buyerId || '',
+        comments: data.comments || []
+      };
+      this.setData({
+        rewardInfo,
+        isFavorited: data.is_favorite || false
+      });
+    } catch (err) {
+      console.error('加载悬赏详情失败:', err);
+      wx.showToast({ title: '加载失败，请重试', icon: 'none' });
+    }
   },
 
   onBack() {
@@ -94,41 +112,56 @@ Page({
   },
 
   checkFavoriteStatus() {
-    const favorited = wx.getStorageSync(`favor_reward_${this.data.rewardInfo.id}`) || false;
-    this.setData({ isFavorited: favorited });
+    // isFavorited 已在 loadRewardData 中设置
   },
 
   async onToggleFavorite() {
     const newStatus = !this.data.isFavorited;
     this.setData({ isFavorited: newStatus });
-    if (newStatus) {
-      wx.showToast({ title: '已收藏', icon: 'success', duration: 1000 });
-      wx.setStorageSync(`favor_reward_${this.data.rewardInfo.id}`, true);
-    } else {
-      wx.showToast({ title: '已取消收藏', icon: 'none', duration: 1000 });
-      wx.setStorageSync(`favor_reward_${this.data.rewardInfo.id}`, false);
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'user/toggleFavorite',
+          data: { goodsId: this.data.rewardInfo.id }
+        }
+      });
+      if (res.result.code === 0) {
+        wx.showToast({ title: res.result.data?.message || (newStatus ? '已收藏' : '已取消收藏'), icon: 'success', duration: 1000 });
+      }
+    } catch (err) {
+      this.setData({ isFavorited: !newStatus });
+      wx.showToast({ title: '操作失败', icon: 'none' });
     }
   },
 
-  // 确认接单（带弹窗确认）
+  // 确认接单（调用云函数 bounty/take）
   onAcceptOrder() {
     wx.showModal({
       title: '确认接单',
       content: '您确定要接取此悬赏吗？接单后需按照约定完成交易。',
       confirmText: '确定接单',
       cancelText: '再想想',
-      success: (res) => {
+      success: async (res) => {
         if (res.confirm) {
-          // 此处调用后端接单接口
-          wx.showToast({
-            title: '接单成功',
-            icon: 'success',
-            duration: 2000
-          });
-          // 可跳转至订单页面或刷新状态
-          // setTimeout(() => {
-          //   wx.navigateBack();
-          // }, 2000);
+          try {
+            const result = await wx.cloud.callFunction({
+              name: 'backend',
+              data: {
+                action: 'bounty/take',
+                data: { RewardId: this.data.rewardInfo.id }
+              }
+            });
+            const ret = result.result;
+            if (ret.code === 0) {
+              wx.showToast({ title: '接单成功', icon: 'success', duration: 2000 });
+            } else {
+              wx.showToast({ title: ret.msg || '接单失败', icon: 'none' });
+            }
+          } catch (err) {
+            console.error('接单失败:', err);
+            wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+          }
         }
       }
     });

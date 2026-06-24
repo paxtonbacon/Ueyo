@@ -22,3 +22,8 @@ exports.getFavorites = catchAsync(async (event) => {
   const data = await userService.getFavorites(event)
   return SUCCESS(data)
 })
+
+exports.toggleFavorite = catchAsync(async (event) => {
+  const data = await userService.toggleFavorite(event)
+  return SUCCESS(data)
+})

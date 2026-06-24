@@ -1,7 +1,4 @@
 <!-- pages/self/Order/Order.wxml -->
-<!-- <navigation-bar title="订单" back="{{true}}" color="black" background="#FFF"></navigation-bar> -->
-
-<!-- 外层：订单类型 -->
 <tab-container
   tabs="{{outerTabs}}"
   showLeft="{{true}}"
@@ -21,11 +18,18 @@
       bind:tabchange="onInnerTabChange"
       data-outer="0"
     >
-      <view slot="tab-content-0">商品-全部订单列表</view>
-      <view slot="tab-content-1">商品-待付款订单列表</view>
-      <view slot="tab-content-2">商品-待发货订单列表</view>
-      <view slot="tab-content-3">商品-待收货订单列表</view>
-      <view slot="tab-content-4">商品-已完成订单列表</view>
+      <view slot="tab-content-0">
+        <order_g1 list="{{goods_waitPay}}" bind:cancel="onOrderCancel" bind:pay="onOrderPay" />
+      </view>
+      <view slot="tab-content-1">
+        <order_g2 list="{{goods_paid}}" bind:refund="onOrderRefund" bind:confirm="onOrderConfirm" />
+      </view>
+      <view slot="tab-content-2">
+        <order_g3 list="{{goods_evaluate}}" bind:evaluate="onOrderEvaluate" />
+      </view>
+      <view slot="tab-content-3">
+        <order_g4 list="{{goods_complete}}" />
+      </view>
     </tab-container-no-space>
   </view>
 
@@ -40,11 +44,15 @@
       bind:tabchange="onInnerTabChange"
       data-outer="1"
     >
-      <view slot="tab-content-0">悬赏-全部订单列表</view>
-      <view slot="tab-content-1">悬赏-待付款订单列表</view>
-      <view slot="tab-content-2">悬赏-待发货订单列表</view>
-      <view slot="tab-content-3">悬赏-待收货订单列表</view>
-      <view slot="tab-content-4">悬赏-已完成订单列表</view>
+      <view slot="tab-content-0">
+        <order_r1 list="{{rewards_active}}" bind:cancel="onOrderCancel" />
+      </view>
+      <view slot="tab-content-1">
+        <order_r2 list="{{rewards_evaluate}}" bind:evaluate="onOrderEvaluate" />
+      </view>
+      <view slot="tab-content-2">
+        <order_r3 list="{{rewards_complete}}" />
+      </view>
     </tab-container-no-space>
   </view>
 </tab-container>

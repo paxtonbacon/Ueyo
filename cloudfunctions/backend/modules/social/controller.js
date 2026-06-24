@@ -32,3 +32,8 @@ exports.submitReply = catchAsync(async (event) => {
   const data = await socialService.submitReply(event)
   return SUCCESS(data)
 })
+
+exports.createTopic = catchAsync(async (event) => {
+  const data = await socialService.createTopic(event)
+  return SUCCESS(data)
+})

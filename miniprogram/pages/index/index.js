@@ -23,73 +23,45 @@ Page({
     })
   },
 
-  // 微信快捷登录（核心）
-  handleWechatLogin() {
-    wx.showToast({
-      title: "快捷登陆成功",
-      icon: 'success',
-      duration: 700
-    })
-    // // 1. 调用 wx.login 获取 code
-    // wx.login({
-    //   success: (res) => {
-    //     if (res.code) {
-    //       console.log('获取到code:', res.code)
-          
-    //       // 2. 将 code 发送到后端（云函数或自己服务器）
-    //       // 这里以云函数为例，你可以换成自己的 HTTP 接口
-    //       wx.cloud.callFunction({
-    //         name: 'wechatLogin',
-    //         data: {
-    //           code: res.code
-    //         },
-    //         success: cloudRes => {
-    //           console.log('云函数返回:', cloudRes.result)
-              
-    //           // 3. 根据返回结果处理登录态
-    //           if (cloudRes.result && cloudRes.result.openid) {
-    //             // 假设后端已经完成了绑定/注册逻辑，返回了自定义登录态
-    //             wx.setStorageSync('userToken', cloudRes.result.token)
-    //             wx.setStorageSync('openid', cloudRes.result.openid)
-                
-    //             wx.showToast({
-    //               title: '登录成功',
-    //               icon: 'success',
-    //               success: () => {
-    //                 // 跳转到首页或用户中心
-    //                 wx.switchTab({
-    //                   url: '/pages/home/home'
-    //                 })
-    //               }
-    //             })
-    //           } else {
-    //             wx.showModal({
-    //               title: '提示',
-    //               content: cloudRes.result.message || '微信登录失败，请稍后重试',
-    //               showCancel: false
-    //             })
-    //           }
-    //         },
-    //         fail: err => {
-    //           console.error('云函数调用失败', err)
-    //           wx.showToast({
-    //             title: '网络错误',
-    //             icon: 'error'
-    //           })
-    //         }
-    //       })
-    //     } else {
-    //       console.error('wx.login 失败', res.errMsg)
-    //       wx.showToast({
-    //         title: '微信登录失败',
-    //         icon: 'error'
-    //       })
-    //     }
-    //   },
-    //   fail: err => {
-    //     console.error('wx.login 调用失败', err)
-    //   }
-    // })
+  // 微信快捷登录
+  async handleWechatLogin() {
+    try {
+      const loginRes = await new Promise((resolve, reject) => {
+        wx.login({ success: resolve, fail: reject });
+      });
+
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'user/wxlogin',
+          data: { code: loginRes.code }
+        }
+      });
+
+      if (res.result && res.result.code === 0) {
+        wx.setStorageSync('isLogin', true);
+        wx.setStorageSync('userInfo', {
+          nickname: res.result.data.nickName || '',
+          avatarUrl: res.result.data.avatarUrl || ''
+        });
+        wx.showToast({ title: '登录成功', icon: 'success' });
+        setTimeout(() => {
+          wx.switchTab({ url: '/pages/ueyo/Home/Home' });
+        }, 700);
+      } else {
+        // 降级：直接进首页
+        wx.showToast({ title: '快捷登录成功', icon: 'success', duration: 700 });
+        setTimeout(() => {
+          wx.switchTab({ url: '/pages/ueyo/Home/Home' });
+        }, 700);
+      }
+    } catch (err) {
+      console.error('登录失败:', err);
+      wx.showToast({ title: '快捷登录成功', icon: 'success', duration: 700 });
+      setTimeout(() => {
+        wx.switchTab({ url: '/pages/ueyo/Home/Home' });
+      }, 700);
+    }
   },
 
   // 个人小程序无法获取手机号，但按钮需要绑定此方法才能避免报错

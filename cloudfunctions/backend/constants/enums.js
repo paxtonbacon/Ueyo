@@ -11,10 +11,6 @@ module.exports = {
     LIKE_NEW: '2',
     SLIGHT_TRACE: '3',
     OBVIOUS_TRACE: '4'
-  },
-  TRADE_TYPE: {
-    FACE_TO_FACE: '1',
-    EXPRESS: '2',
-    BOTH: '3'
   }
+  // TRADE_TYPE 已废弃，改为用户自由输入文本字符串
 }

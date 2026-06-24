@@ -1,68 +1,45 @@
 // components/comments/comments.js
-// components/comments/comments.js
 Component({
   properties: {
     postId: {
       type: String,
       value: ''
+    },
+    // 外部传入的评论数据（由详情API提供）
+    externalComments: {
+      type: Array,
+      value: null
     }
   },
   data: {
     comments: [],
     totalCount: 0,
     showInput: false,
-    replyTarget: null,   // { id, userName, parentId }   parentId用于标识一级评论id
+    replyTarget: null,
     commentText: ''
+  },
+  observers: {
+    'externalComments'(newVal) {
+      if (newVal && newVal.length > 0) {
+        this.setData({
+          comments: newVal,
+          totalCount: newVal.reduce((sum, c) => sum + 1 + (c.replies ? c.replies.length : 0), 0)
+        });
+      }
+    }
   },
   lifetimes: {
     attached() {
-      this.loadComments();
+      // 优先使用外部传入的评论，否则显示空
+      if (!this.properties.externalComments || this.properties.externalComments.length === 0) {
+        this.setData({ comments: [], totalCount: 0 });
+      }
     }
   },
   methods: {
     loadComments() {
-      // 模拟数据：为每个用户增加 userId 字段
-      setTimeout(() => {
-        const mockComments = [
-          {
-            id: 'c1',
-            userId: 'user1',
-            userAvatar: 'https://randomuser.me/api/portraits/women/1.jpg',
-            userName: '小甜心',
-            content: '看起来很不错诶！我也想要',
-            createTime: '2小时前',
-            isLiked: false,
-            likeCount: 5,
-            replies: [
-              {
-                id: 'r1',
-                parentId: 'c1',
-                userId: 'user2',
-                userAvatar: 'https://randomuser.me/api/portraits/men/2.jpg',
-                userName: '卖家回复',
-                content: '可以私聊我哦',
-                replyToUserName: '小甜心',   // 回复对象
-                createTime: '1小时前',
-                isLiked: false,
-                likeCount: 1
-              }
-            ]
-          },
-          {
-            id: 'c2',
-            userId: 'user3',
-            userAvatar: 'https://randomuser.me/api/portraits/men/3.jpg',
-            userName: '技术宅',
-            content: '这个价格合理吗？',
-            createTime: '3小时前',
-            isLiked: true,
-            likeCount: 12,
-            replies: []
-          }
-        ];
-        const totalCount = mockComments.reduce((sum, c) => sum + 1 + c.replies.length, 0);
-        this.setData({ comments: mockComments, totalCount });
-      }, 300);
+      // 评论数据由父页面通过 externalComments 属性传入
+      // 如需独立加载，可通过 postId 调用相关接口
     },
 
     // 显示评论输入框（供外部或内部调用）
@@ -94,79 +71,39 @@ Component({
       this.showCommentInput(target);
     },
 
-    // 提交评论
-    onSubmitComment() {
-      const data = this.data;  // 先保存到局部变量
-      const { commentText, replyTarget, postId } = data;
+    // 提交评论（调用云函数 social/reply/submit）
+    async onSubmitComment() {
+      const { commentText, replyTarget, postId } = this.data;
       if (!commentText.trim()) {
         wx.showToast({ title: '请输入内容', icon: 'none' });
         return;
       }
 
-      const newId = Date.now().toString();
-      const currentUser = {
-        userId: 'currentUser',   // 实际应从登录态获取
-        userName: '当前用户',
-        userAvatar: 'https://randomuser.me/api/portraits/men/6.jpg'
-      };
-
-      if (replyTarget) {
-        // 回复操作：构造二级回复
-        const newReply = {
-          id: newId,
-          parentId: replyTarget.parentId ? replyTarget.parentId : replyTarget.id, // 如果回复的是一级评论，parentId 就是那个一级评论的id
-          userId: currentUser.userId,
-          userAvatar: currentUser.userAvatar,
-          userName: currentUser.userName,
-          content: commentText,
-          replyToUserName: replyTarget.userName,   // 被回复的用户名
-          createTime: '刚刚',
-          isLiked: false,
-          likeCount: 0
-        };
-
-        // 确定要插入到哪一条一级评论的 replies 中
-        const comments = [...this.data.comments];
-        let targetCommentIndex = -1;
-        if (replyTarget.parentId) {
-          // 回复的是二级回复，那么需要找到该二级回复所属的一级评论
-          for (let i = 0; i < comments.length; i++) {
-            const hasReply = comments[i].replies.some(r => r.id === replyTarget.id);
-            if (hasReply) {
-              targetCommentIndex = i;
-              break;
+      try {
+        const res = await wx.cloud.callFunction({
+          name: 'backend',
+          data: {
+            action: 'social/reply/submit',
+            data: {
+              ParentId: replyTarget ? (replyTarget.parentId || replyTarget.id) : postId,
+              content: commentText.trim()
             }
           }
+        });
+
+        const result = res.result;
+        if (result.code === 0) {
+          wx.showToast({ title: '评论成功', icon: 'success' });
+          this.hideInput();
+          // 刷新评论（触发父组件重新加载）
+          this.triggerEvent('refresh');
         } else {
-          // 回复的是一级评论
-          targetCommentIndex = comments.findIndex(c => c.id === replyTarget.id);
+          wx.showToast({ title: result.msg || '评论失败', icon: 'none' });
         }
-
-        if (targetCommentIndex !== -1) {
-          comments[targetCommentIndex].replies.push(newReply);
-          this.setData({ comments });
-          this.setData({ totalCount: this.data.totalCount + 1 });
-        }
-      } else {
-        // 全局评论（一级评论）
-        const newComment = {
-          id: newId,
-          userId: currentUser.userId,
-          userAvatar: currentUser.userAvatar,
-          userName: currentUser.userName,
-          content: commentText,
-          createTime: '刚刚',
-          isLiked: false,
-          likeCount: 0,
-          replies: []
-        };
-        const comments = [newComment, ...this.data.comments];
-        this.setData({ comments, totalCount: this.data.totalCount + 1 });
+      } catch (err) {
+        console.error('提交评论失败:', err);
+        wx.showToast({ title: '网络异常，请重试', icon: 'none' });
       }
-
-      this.hideInput();
-      // 调用后端接口保存评论
-      console.log('提交评论:', commentText, replyTarget);
     },
 
     // 点赞评论或回复

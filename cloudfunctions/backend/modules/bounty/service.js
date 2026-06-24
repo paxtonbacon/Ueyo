@@ -160,7 +160,7 @@ async function getBountyDetail(event) {
     minprice: price / 100,
     maxprice: price / 100,
     desc: bounty.description || '',
-    tradeWays: '3', // 前端需要，数据库暂无，默认均可
+    tradeWays: '面交/快递均可', // 前端需要，悬赏暂无独立交易方式字段
     comments: comments,
     is_favorite: false,
     recommend_rewards: {

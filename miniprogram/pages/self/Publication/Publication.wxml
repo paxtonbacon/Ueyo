@@ -90,4 +90,24 @@
       </view>
     </tab-container-no-space>
   </view>
+
+  <!-- 帖子浏览记录 -->
+  <view slot="tab-content-2">
+    <post 
+      class="post-component"
+      bind:cardtap="onCardTap" 
+      bind:usertap="onUserTap"
+      bind:like="onLike"
+    />
+  </view>
+
+  <!-- 话题浏览记录 -->
+  <view slot="tab-content-3">
+    <topic 
+      class="topic-component"
+      detailUrl="/pages/topic-detail/topic-detail?id={id}"
+      bind:topicTap="onTopicTap"
+    />
+  </view>
+
 </tab-container>

@@ -1,2 +1,19 @@
 <!--components/publication_detail/rewards/1haven_pub/1haven_pub.wxml-->
-<text>components/publication_detail/rewards/1haven_pub/1haven_pub.wxml</text>
+<view class="haven-pub">
+  <view class="card" wx:for="{{list}}" wx:key="id">
+    <image class="card-img" src="{{item.image || '/images/default-goods.png'}}" mode="aspectFill"></image>
+    <view class="card-content">
+      <text class="reward-title">{{item.title}}</text>
+      <text class="reward-price">悬赏 ¥{{item.reward}}</text>
+      <view class="reward-meta">
+        <text class="meta-item" wx:if="{{item.tradeType}}">{{item.tradeType}}</text>
+      </view>
+      <view class="card-footer">
+        <view class="btn btn-cancel" bindtap="onCancel" data-id="{{item.id}}">取消</view>
+      </view>
+    </view>
+  </view>
+  <view wx:if="{{list.length === 0}}" class="empty-state">
+    <text>暂无已发布的悬赏</text>
+  </view>
+</view>

@@ -57,28 +57,43 @@ Page({
     this.setData({ safeAreaBottom, bottomBarHeight });
   },
 
-  // 模拟获取帖子数据（后续替换为真实接口）
+  // 调用云函数获取帖子详情
   async loadPostData(id) {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    // mock 数据
-    const mockPost = {
-      images: [
-        'https://picsum.photos/400/400?random=101',
-        'https://picsum.photos/400/400?random=102',
-        'https://picsum.photos/400/400?random=103'
-      ],
-      title: '终于收到了心心念念的宝贝！',
-      content: '这个商品真的太棒了，物流很快，包装也很严实。使用体验超出预期，强烈推荐给大家！如果有兴趣可以私信我交流。',
-      category: '好物分享',
-      postTime: '2025-03-15 14:30',
-      userAvatar: 'https://randomuser.me/api/portraits/women/68.jpg',
-      userName: '小确幸学姐',
-      likeCount: 128,
-      collectCount: 45,
-      commentCount: 23
-    };
-    this.setData({ postInfo: mockPost });
-    // 异步获取评论组件并加载数据（组件内部自己加载）
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: {
+          action: 'social/post/detail',
+          data: { PostId: id }
+        }
+      });
+      const result = res.result;
+      if (result.code !== 0) {
+        wx.showToast({ title: result.msg || '帖子不存在', icon: 'none' });
+        return;
+      }
+      const data = result.data;
+      const postInfo = {
+        images: data.PictureCDN || [],
+        title: data.title || '',
+        content: data.content || '',
+        category: data.topic || '',
+        postTime: data.time || '',
+        userAvatar: data.posterAvatarCDN || '',
+        userName: data.posterName || '',
+        likeCount: data.likeCount || 0,
+        collectCount: data.favoriteCount || 0,
+        commentCount: data.commentsCount || 0
+      };
+      this.setData({
+        postInfo,
+        isPostLiked: data.is_liked || false,
+        isCollected: data.is_favorited || false
+      });
+    } catch (err) {
+      console.error('加载帖子详情失败:', err);
+      wx.showToast({ title: '加载失败，请重试', icon: 'none' });
+    }
   },
 
   onBack() {

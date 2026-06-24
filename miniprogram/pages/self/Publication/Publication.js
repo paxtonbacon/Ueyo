@@ -3,7 +3,9 @@ Page({
   data: {
     outerTabs: [
       { name: '商品发表' },
-      { name: '悬赏发表' }
+      { name: '悬赏发表' },
+      { name: '帖子' },
+      { name: '话题' }
     ],
     goodsTabs: [
       { name: '已发布' },
@@ -34,64 +36,64 @@ Page({
     this.loadAllData();
   },
 
-  // 加载所有数据
-  loadAllData() {
-    this.loadGoodsData();
-    this.loadRewardsData();
-  },
+  // 加载所有数据（调用云函数 order/list）
+  async loadAllData() {
+    try {
+      // 商品订单（作为卖家）
+      const goodsRes = await wx.cloud.callFunction({
+        name: 'backend',
+        data: { action: 'order/list', data: { role: 'seller', page: 1, pageSize: 50 } }
+      });
+      const orders = (goodsRes.result.code === 0 ? goodsRes.result.data.orders : []) || [];
 
-  // 加载商品数据
-  loadGoodsData() {
-    const pubList = this.getMockData('goods', 'published');
-    const deliveryList = this.getMockData('goods', 'delivery');
-    const evaluateList = this.getMockData('goods', 'evaluate');
-    const completeList = this.getMockData('goods', 'complete');
-    this.setData({
-      goods_pub_list: pubList,
-      goods_delivery_list: deliveryList,
-      goods_evaluate_list: evaluateList,
-      goods_complete_list: completeList
-    });
-  },
+      const pubList = orders.filter(o => o.orderStatus === '1');
+      const deliveryList = orders.filter(o => o.orderStatus === '2');
+      const evaluateList = orders.filter(o => o.orderStatus === '3');
+      const completeList = orders.filter(o => o.orderStatus === '4');
 
-  // 加载悬赏数据
-  loadRewardsData() {
-    const pubList = this.getMockData('rewards', 'published');
-    const evaluateList = this.getMockData('rewards', 'evaluate');
-    const completeList = this.getMockData('rewards', 'complete');
-    this.setData({
-      rewards_pub_list: pubList,
-      rewards_evaluate_list: evaluateList,
-      rewards_complete_list: completeList
-    });
-  },
+      this.setData({
+        goods_pub_list: pubList.map(this.formatGoodsItem),
+        goods_delivery_list: deliveryList.map(this.formatGoodsItem),
+        goods_evaluate_list: evaluateList.map(this.formatGoodsItem),
+        goods_complete_list: completeList.map(this.formatGoodsItem)
+      });
 
-  // Mock数据生成函数
-  getMockData(type, status) {
-    // 商品基础数据
-    const goodsBase = [
-      { id: 1, name: '复古运动鞋', price: 22, condition: '9.5', tradeType: '面交', image: '/images/goods1.png' },
-      { id: 2, name: '简约双肩包', price: 22, condition: '8.0', tradeType: '邮寄', image: '/images/goods2.png'},
-      { id: 3, name: '纯棉T恤', price: 22, condition: '9.0', tradeType: '面交', image: '/images/goods3.png' },
-    ];
-    // 悬赏基础数据
-    const rewardBase = [
-      { id: 101, title: '寻猫启事', reward: 500, tradeType: '面交', image: '/images/reward1.png' },
-      { id: 102, title: '求帮忙遛狗', reward: 50, tradeType: '邮寄', image: '/images/reward2.png' },
-      { id: 103, title: '找合租室友', reward: 0, tradeType: '面交', image: '/images/reward3.png' },
-    ];
+      // 悬赏订单（作为买家）
+      const bountyRes = await wx.cloud.callFunction({
+        name: 'backend',
+        data: { action: 'order/list', data: { role: 'buyer', page: 1, pageSize: 50 } }
+      });
+      const bountyOrders = (bountyRes.result.code === 0 ? bountyRes.result.data.orders : []) || [];
 
-    if (type === 'goods') {
-      if (status === 'published') return goodsBase.slice(0, 2);
-      if (status === 'delivery') return [goodsBase[1]];
-      if (status === 'evaluate') return [goodsBase[0], goodsBase[2]];
-      if (status === 'complete') return [goodsBase[2]];
-    } else if (type === 'rewards') {
-      if (status === 'published') return rewardBase.slice(0, 1);
-      if (status === 'evaluate') return rewardBase.slice(1, 2);
-      if (status === 'complete') return rewardBase.slice(2);
+      this.setData({
+        rewards_pub_list: bountyOrders.filter(o => o.orderStatus === '1').map(this.formatRewardItem),
+        rewards_evaluate_list: bountyOrders.filter(o => o.orderStatus === '3').map(this.formatRewardItem),
+        rewards_complete_list: bountyOrders.filter(o => o.orderStatus === '4').map(this.formatRewardItem)
+      });
+    } catch (err) {
+      console.error('加载发布数据失败:', err);
     }
-    return [];
+  },
+
+  formatGoodsItem(o) {
+    return {
+      id: o.orderId,
+      name: o.goodsTitle || '',
+      price: o.amount || 0,
+      condition: '',
+      tradeType: '',
+      image: o.firstPictureCDN || ''
+    };
+  },
+
+  formatRewardItem(o) {
+    return {
+      id: o.orderId,
+      title: o.goodsTitle || '',
+      reward: o.amount || 0,
+      tradeType: '',
+      image: o.firstPictureCDN || ''
+    };
   },
 
   // 外层Tab切换
