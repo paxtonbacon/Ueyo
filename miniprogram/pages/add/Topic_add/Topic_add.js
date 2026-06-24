@@ -1,4 +1,25 @@
 // pages/add/Topic_add/Topic_add.js
+const app = getApp()
+
+function requireAuth() {
+  const g = app && app.globalData
+  if (!g || !g.isLogin || g.authLevel < 2) {
+    wx.showModal({
+      title: '需要认证',
+      content: '请先完成邮箱验证，才能创建话题',
+      confirmText: '去验证',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          wx.navigateTo({ url: '/pages/register_login/Email_Val/Email_Val' })
+        }
+      }
+    })
+    return false
+  }
+  return true
+}
+
 Page({
   data: {
     title: '',
@@ -8,7 +29,10 @@ Page({
   },
 
   onLoad() {
-    // 可初始化其他数据
+    if (!requireAuth()) {
+      wx.navigateBack({ delta: 1, fail: () => wx.switchTab({ url: '/pages/self/Myself/Myself' }) });
+      return;
+    }
   },
 
   onTitleInput(e) {
@@ -84,6 +108,7 @@ Page({
       const res = await wx.cloud.callFunction({
         name: 'backend',
         data: {
+          __auth: (app && app.globalData && app.globalData.token) || '',
           action: 'social/topic/create',
           data: {
             title: this.data.title.trim(),

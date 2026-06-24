@@ -8,6 +8,21 @@ exports.wxLogin = catchAsync(async (event) => {
   return SUCCESS(data)
 })
 
+exports.emailRegister = catchAsync(async (event) => {
+  const data = await userService.emailRegister(event)
+  return SUCCESS(data)
+})
+
+exports.verifyEmail = catchAsync(async (event) => {
+  const data = await userService.verifyEmail(event)
+  return SUCCESS(data)
+})
+
+exports.emailLogin = catchAsync(async (event) => {
+  const data = await userService.emailLogin(event)
+  return SUCCESS(data)
+})
+
 exports.getProfile = catchAsync(async (event) => {
   const data = await userService.getProfile(event)
   return SUCCESS(data)

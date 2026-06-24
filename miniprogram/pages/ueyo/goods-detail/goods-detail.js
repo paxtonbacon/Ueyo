@@ -151,8 +151,24 @@ Page({
     }
   },
 
-  // 点击立即购买 → 创建订单
+  // 点击立即购买 → 创建订单（需认证）
   async onBuyNow() {
+    const app = getApp();
+    const g = app && app.globalData;
+    if (!g || !g.isLogin || g.authLevel < 2) {
+      wx.showModal({
+        title: '需要认证',
+        content: '请先完成邮箱验证，才能购买商品',
+        confirmText: '去验证',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({ url: '/pages/register_login/Email_Val/Email_Val' });
+          }
+        }
+      });
+      return;
+    }
     const goodsInfo = this.data.goodsInfo;
     wx.showModal({
       title: '确认购买',

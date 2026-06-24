@@ -4,7 +4,7 @@
     "pages/index/index",
     "pages/register_login/UserRegister/UserRegister",
     "pages/register_login/UserLogin/UserLogin",
-    "pages/register_login/Email_Val/EmailVal",
+    "pages/register_login/Email_Val/Email_Val",
     "pages/forums/Sets/Sets",
     "pages/forums/Topic_products/Topic_products",
     "pages/add/Select/Select",

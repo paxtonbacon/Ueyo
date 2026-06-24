@@ -1,11 +1,12 @@
 // modules/goods/service.js
 const { generateDescription } = require('../../utils/aiClient')
 const { validateGoodsId } = require('./validator')
+const { SELLER_STATUS, BUYER_STATUS, CONDITION } = require('../../constants/enums')
 
-// ========== 枚举白名单（与数据库模型严格对齐） ==========
+// ========== 枚举白名单 ==========
 const CONDITION_MAP = { '1': true, '2': true, '3': true, '4': true }
-const STATUS_MAP = { '1': true, '2': true, '3': true, '4': true }
 // tradeType 已改为自由文本字符串，不再校验枚举
+// status 已拆分为 seller_status / buyer_status
 
 const isValidEnum = (value, map) => map[value] === true
 
@@ -38,7 +39,8 @@ async function publishGoods(event) {
       originalPrice: originalPriceInFen,
       condition,
       tradeType,
-      status: '1',
+      seller_status: SELLER_STATUS.HAVE_PUB,    // 已发布
+      buyer_status: BUYER_STATUS.NONE,           // 无买家
       images,
       video: video || '',
       tags: tags || [],
@@ -48,6 +50,15 @@ async function publishGoods(event) {
       createdAt: Date.now()
     }
   })
+
+  // 将商品ID追加到用户发布列表
+  const _ = db.command
+  const userRes = await db.collection('users').where({ _openid: OPENID }).get()
+  if (userRes.data.length > 0) {
+    await db.collection('users').doc(userRes.data[0]._id).update({
+      data: { publishedGoods: _.push(result._id) }
+    })
+  }
 
   return {
     goodsId: result._id,
@@ -111,7 +122,7 @@ async function getGoodsDetail(event) {
       const recRes = await db.collection('goods')
         .where({
           category: goods.category,
-          status: '1',
+          seller_status: SELLER_STATUS.HAVE_PUB,   // 仅推荐在售商品
           _id: db.command.neq(GoodId)
         })
         .orderBy('likeCount', 'desc')
@@ -155,7 +166,7 @@ async function getGoodsList(event) {
   const db = event.db
   const { page = 1, pageSize = 10, category, keyword } = event.data || {}
 
-  const where = { status: '1' }
+  const where = { seller_status: SELLER_STATUS.HAVE_PUB }   // 仅展示在售商品
   if (category) where.category = category
   if (keyword) {
     where.title = db.RegExp({ regexp: keyword, options: 'i' })

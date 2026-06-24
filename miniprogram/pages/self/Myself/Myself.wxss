@@ -38,6 +38,13 @@
   background-color: #146379;
 }
 
+.avatar-img {
+  width: 70px;          /* 直径 = 半径 35px * 2 */
+  height: 70px;
+  border-radius: 50%;   /* 强制圆形 */
+  flex-shrink: 0;       /* 防止被压缩 */
+}
+
 .login-info {
   flex: 1;
   display: flex;

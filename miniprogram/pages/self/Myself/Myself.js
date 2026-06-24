@@ -1,53 +1,129 @@
 // pages/self/Myself/Myself.js
+const app = getApp()
+
 Page({
   data: {
     isLogin: false,
+    authLevel: 0,          // 0=未注册, 1=已注册待验证, 2=已验证
+    userInfo: {
+      nickName: '',
+      avatarUrl: '',
+      email: ''
+    },
     
-    // 星期标签（7行）
     weekLabels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
-    
-    // 月份列标签
     monthColumns: [],
-    
-    // 热力图数据：7行 × N列
     heatmapData: [[], [], [], [], [], [], []],
-    
-    // 近7天数据
     weekDays: [],
     weeklyData: [],
     weeklyTrend: 12,
-    
-    // 汇总数据
     summaryData: [
       { icon: '📊', value: 108, label: '近7天活跃' },
       { icon: '🔥', value: 12, label: '连续活跃' },
       { icon: '⭐', value: 67, label: '获得点赞' },
       { icon: '✏️', value: 8, label: '新增发布' }
     ],
-    
     insightText: '你通常在下午时段最活跃，建议在这个时间段发布内容，获得更多互动！'
   },
 
   onLoad() {
     this.checkLoginStatus();
-    this.updateWeeklyData();
-    this.initHeatmapData();
   },
 
-  // 检查登录状态并加载用户信息
+  onShow() {
+    // 每次显示时更新登录态（从注册/验证页返回时刷新）
+    this.syncFromGlobalData();
+  },
+
+  // ========== 从全局数据同步登录态 ==========
+  syncFromGlobalData() {
+    try {
+      const g = app && app.globalData;
+      if (!g) return;
+      if (g.isLogin && g.token) {
+        this.setData({
+          isLogin: true,
+          authLevel: g.authLevel || 0,
+          'userInfo.nickName': g.nickName || '',
+          'userInfo.avatarUrl': g.avatarUrl || '',
+          'userInfo.email': g.email || ''
+        });
+        this.updateWeeklyData();
+        this.initHeatmapData();
+      }
+    } catch (e) {
+      console.warn('syncFromGlobalData error:', e);
+    }
+  },
+
+  // ========== 检查登录状态 ==========
   async checkLoginStatus() {
     try {
+      const g = app && app.globalData;
+      if (!g) { this.setData({ isLogin: false }); return; }
+
+      // 1. 运行时优先
+      if (g.isLogin && g.token) {
+        this.syncFromGlobalData();
+        return;
+      }
+
+      // 2. 持久化恢复
+      app.restoreAuth();
+      if (g.isLogin && g.token) {
+        this.syncFromGlobalData();
+        return;
+      }
+
+      // 3. 未登录
+      this.setData({ isLogin: false, authLevel: 0 });
+    } catch (e) {
+      console.warn('checkLoginStatus error:', e);
+      this.setData({ isLogin: false });
+    }
+  },
+
+  // ========== 点击登录 → 跳转注册页 ==========
+  onTapLogin() {
+    try {
+      const g = app && app.globalData;
+      if (g && g.isLogin && g.authLevel >= 2) {
+        
+        this.loadProfile();
+        return;
+      }
+      if (g && g.isLogin && g.authLevel === 1) {
+        wx.navigateTo({ url: '/pages/register_login/Email_Val/Email_Val' });
+        return;
+      }
+    } catch (e) {}
+    // 默认：跳转注册页
+    wx.navigateTo({ url: '/pages/register_login/UserRegister/UserRegister' });
+  },
+  // ========== 加载个人信息 ==========
+  async loadProfile() {
+    try {
+      const g = app && app.globalData;
+      if (!g || !g.token) return;
       const res = await wx.cloud.callFunction({
         name: 'backend',
-        data: { action: 'user/profile', data: {} }
+        data: {
+          action: 'user/profile',
+          data: { __auth: g.token }
+        }
       });
-      if (res.result.code === 0) {
-        this.setData({ isLogin: true });
-        wx.setStorageSync('isLogin', true);
+      if (res.result && res.result.code === 0) {
+        const u = res.result.data;
+        this.setData({
+          isLogin: true,
+          authLevel: g.authLevel || 0,
+          'userInfo.nickName': u.nickName || '',
+          'userInfo.avatarUrl': u.avatarUrl || '',
+          'userInfo.email': u.email || ''
+        });
       }
     } catch (err) {
-      const isLogin = wx.getStorageSync('isLogin') || false;
-      this.setData({ isLogin });
+      console.error('加载个人信息失败:', err);
     }
   },
   
@@ -269,31 +345,5 @@ initHeatmapData() {
 
   goToHistory() {
     wx.navigateTo({ url: '/pages/self/History/History' });
-  },
-
-  // 微信登录
-  async onTapLogin() {
-    try {
-      const loginRes = await wx.cloud.callFunction({
-        name: 'backend',
-        data: { action: 'user/wxlogin', data: { openid: 'test_' + Date.now() } }
-      });
-      if (loginRes.result.code === 0) {
-        this.setData({ isLogin: true });
-        wx.setStorageSync('isLogin', true);
-        wx.showToast({ title: '登录成功', icon: 'success' });
-      }
-    } catch (err) {
-      // 降级：本地模拟
-      this.setData({ isLogin: true });
-      wx.setStorageSync('isLogin', true);
-      wx.setStorageSync('userInfo', {
-        nickname: '我爱喵喵',
-        gender: '男',
-        address: '上海宠物公园',
-        registerTime: '2024-01-15'
-      });
-      wx.showToast({ title: '登录成功', icon: 'success' });
-    }
   }
 });

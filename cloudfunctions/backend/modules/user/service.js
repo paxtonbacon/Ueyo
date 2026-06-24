@@ -1,56 +1,232 @@
 // modules/user/service.js
 const { validateUserId, validateUpdateProfile } = require('./validator')
+const jwt = require('../../utils/jwt')
+const crypto = require('crypto')
 
-// modules/user/service.js (仅替换 wxLogin 部分)
-
-// ========== 1. 微信登录（支持测试模式） ==========
+// ========== 1. 微信登录（一级鉴权：返回 JWT） ==========
 async function wxLogin(event) {
   const db = event.db
-  const { code, openid } = event.data || {}
+  const OPENID = event.OPENID
 
-  let realOpenid = openid // 测试模式直接传入
-
-  // 正式模式：用 code 换取 openid
-  if (!realOpenid && code) {
-    // 实际应调用微信接口：https://api.weixin.qq.com/sns/jscode2session
-    // 此处模拟，实际需使用 axios 或 cloud.callFunction
-    // 为了演示，假设返回的 openid 为 'mock_openid_' + code
-    // realOpenid = await exchangeCodeForOpenid(code)
-    throw new Error('正式环境需实现 code 换取 openid 的逻辑')
+  if (!OPENID) {
+    throw new Error('无法获取微信身份，请重新进入小程序')
   }
 
-  if (!realOpenid) {
-    throw new Error('缺少登录凭证 code 或 openid（测试模式）')
-  }
-
-  // 查询用户是否存在
-  const userRes = await db.collection('users').where({ _openid: realOpenid }).get()
+  // 查询或创建用户
+  const userRes = await db.collection('users').where({ _openid: OPENID }).get()
   let user = userRes.data[0]
 
   if (!user) {
-    // 新用户：创建记录
     const result = await db.collection('users').add({
       data: {
-        _openid: realOpenid,
+        _openid: OPENID,
         nickName: '微信用户',
         avatarUrl: '',
         creditScore: 100,
         creditLevel: '1',
-        authStatus: '1',
+        authStatus: '0',       // 0=未注册邮箱
         favorites: [],
+        history: [],
+        publishedGoods: [],     // 发布的商品
+        publishedTasks: [],     // 发布的悬赏
+        getGood: [],            // 购买的商品
+        acceptTasks: [],        // 接取的悬赏
         createdAt: Date.now()
       }
     })
-    user = { _id: result._id, nickName: '微信用户', avatarUrl: '' }
+    user = { _id: result._id, nickName: '微信用户', avatarUrl: '', cauEmail: '', authStatus: '0' }
   }
 
-  // 返回用户信息 + 模拟 token
+  // 签发 JWT（authLevel 根据用户是否已验证邮箱）
+  const authLevel = user.authStatus === '2' ? 2 : (user.authStatus === '1' ? 1 : 0)
+  const token = jwt.sign({
+    userId: user._id,
+    openId: OPENID,
+    email: user.cauEmail || '',
+    authLevel: authLevel
+  })
+
   return {
     userId: user._id,
     nickName: user.nickName,
     avatarUrl: user.avatarUrl,
-    token: 'mock-token-' + Date.now()
+    email: user.cauEmail || '',
+    authLevel: authLevel,
+    token: token
   }
+}
+
+// ========== 2. 邮箱注册（二级鉴权：注册邮箱+密码） ==========
+async function emailRegister(event) {
+  const db = event.db
+  const OPENID = event.OPENID
+  const { email, password } = event.data || {}
+
+  if (!OPENID) throw new Error('无法获取微信身份，请重新进入小程序')
+
+  // 校验
+  const emailReg = /^[a-zA-Z0-9._-]+@(cau\.edu\.cn|cau\.cn)$/
+  if (!email || !emailReg.test(email)) {
+    throw new Error('请输入正确的农大邮箱（@cau.edu.cn 或 @cau.cn）')
+  }
+  if (!password || password.length < 6) {
+    throw new Error('密码长度不能少于6位')
+  }
+
+  // 检查邮箱是否已被注册
+  const existRes = await db.collection('users').where({ cauEmail: email }).get()
+  if (existRes.data.length > 0) {
+    throw new Error('该邮箱已被注册')
+  }
+
+  const hashedPw = hashPassword(password)
+
+  // 查找或创建用户记录
+  const userRes = await db.collection('users').where({ _openid: OPENID }).get()
+  let user = userRes.data[0]
+
+  if (!user) {
+    // 首次使用：先创建用户记录
+    const createRes = await db.collection('users').add({
+      data: {
+        _openid: OPENID,
+        nickName: 'koko',
+        avatarUrl: '',
+        creditScore: 100,
+        creditLevel: '1',
+        cauEmail: email,
+        password: hashedPw,
+        authStatus: '1',       // 1=已注册，待验证
+        favorites: [],
+        history: [],
+        publishedGoods: [],
+        publishedTasks: [],
+        getGood: [],
+        acceptTasks: [],
+        createdAt: Date.now()
+      }
+    })
+    user = { _id: createRes._id }
+  } else {
+    // 已有记录：更新邮箱和密码
+    await db.collection('users').doc(user._id).update({
+      data: {
+        cauEmail: email,
+        password: hashedPw,
+        authStatus: '1',
+        updatedAt: Date.now()
+      }
+    })
+  }
+
+  const token = jwt.sign({
+    userId: user._id,
+    openId: OPENID,
+    email: email,
+    authLevel: 1
+  })
+
+  return {
+    userId: user._id,
+    email: email,
+    authLevel: 1,
+    token: token,
+    message: '注册成功，请验证邮箱'
+  }
+}
+
+// ========== 3. 邮箱验证 ==========
+async function verifyEmail(event) {
+  const db = event.db
+  const OPENID = event.OPENID
+  const { code } = event.data || {}  // 验证码（开发阶段可传 '000000'）
+
+  if (!OPENID) throw new Error('无法获取微信身份，请重新进入小程序')
+
+  const userRes = await db.collection('users').where({ _openid: OPENID }).get()
+  const user = userRes.data[0]
+  if (!user) throw new Error('用户不存在')
+  if (!user.cauEmail) throw new Error('请先注册邮箱')
+
+  // 开发阶段：任意6位验证码或 '000000' 均可通过
+  // 生产环境：校验真实邮箱验证码
+  if (!code || code.length !== 6) {
+    throw new Error('请输入6位验证码')
+  }
+  if (code !== '000000') {
+    // 生产环境此处校验真实验证码
+    throw new Error('验证码错误，开发阶段请使用 000000')
+  }
+
+  // 更新验证状态
+  await db.collection('users').doc(user._id).update({
+    data: {
+      authStatus: '2',       // 2=已验证
+      verifiedAt: Date.now()
+    }
+  })
+
+  const token = jwt.sign({
+    userId: user._id,
+    openId: OPENID,
+    email: user.cauEmail,
+    authLevel: 2
+  })
+
+  return {
+    userId: user._id,
+    email: user.cauEmail,
+    authLevel: 2,
+    token: token,
+    message: '邮箱验证成功'
+  }
+}
+
+// ========== 4. 邮箱登录 ==========
+async function emailLogin(event) {
+  const db = event.db
+  const OPENID = event.OPENID
+  const { email, password } = event.data || {}
+
+  if (!OPENID) throw new Error('无法获取微信身份，请重新进入小程序')
+  if (!email || !password) throw new Error('请输入邮箱和密码')
+
+  const hashedPw = hashPassword(password)
+  const userRes = await db.collection('users')
+    .where({ cauEmail: email, password: hashedPw })
+    .get()
+
+  const user = userRes.data[0]
+  if (!user) throw new Error('邮箱或密码错误')
+
+  // 如果当前微信 openid 与注册时的不同，绑定新 openid
+  if (user._openid !== OPENID) {
+    // 简单处理：允许同一邮箱多设备登录，不强制绑定
+    // 生产环境可在此做 openid 绑定逻辑
+  }
+
+  const authLevel = user.authStatus === '2' ? 2 : 1
+  const token = jwt.sign({
+    userId: user._id,
+    openId: OPENID,
+    email: user.cauEmail,
+    authLevel: authLevel
+  })
+
+  return {
+    userId: user._id,
+    nickName: user.nickName,
+    avatarUrl: user.avatarUrl,
+    email: user.cauEmail,
+    authLevel: authLevel,
+    token: token,
+    message: '登录成功'
+  }
+}
+
+// ========== 辅助：密码哈希 ==========
+function hashPassword(password) {
+  return crypto.createHash('sha256').update('ueyo_salt_' + password).digest('hex')
 }
 
 // ========== 2. 获取个人资料 ==========
@@ -171,6 +347,9 @@ async function toggleFavorite(event) {
 
 module.exports = {
   wxLogin,
+  emailRegister,
+  verifyEmail,
+  emailLogin,
   getProfile,
   updateProfile,
   getFavorites,

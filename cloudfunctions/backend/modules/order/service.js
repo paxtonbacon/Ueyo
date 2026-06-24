@@ -1,5 +1,6 @@
 // modules/order/service.js
 const { validateOrderId, validateCreateOrder } = require('./validator')
+const { SELLER_STATUS, BUYER_STATUS } = require('../../constants/enums')
 
 // ========== 1. 创建订单（购买） ==========
 async function createOrder(event) {
@@ -14,7 +15,7 @@ async function createOrder(event) {
   const goodsRes = await db.collection('goods').doc(goodsId).get()
   const goods = goodsRes.data
   if (!goods) throw new Error('商品不存在')
-  if (goods.status !== '1') throw new Error('商品已下架或已售出')
+  if (goods.seller_status !== SELLER_STATUS.HAVE_PUB) throw new Error('商品已下架或已售出')
 
   // 2. 生成订单号
   const orderNo = 'ORD' + Date.now() + Math.floor(Math.random() * 1000)
@@ -46,10 +47,22 @@ async function createOrder(event) {
 
   const result = await db.collection('orders').add({ data: orderData })
 
-  // 4. 更新商品状态为"已预留"
+  // 4. 更新商品状态：买家→待付款，卖家→待发货(预留)
   await db.collection('goods').doc(goodsId).update({
-    data: { status: '2' } // 已预留
+    data: {
+      buyer_status: BUYER_STATUS.WAITED_FOR_PAY,
+      seller_status: SELLER_STATUS.WAITED_FOR_DEL
+    }
   })
+
+  // 5. 将商品ID追加到买家的 getGood 列表
+  const _ = db.command
+  const userRes = await db.collection('users').where({ _openid: OPENID }).get()
+  if (userRes.data.length > 0) {
+    await db.collection('users').doc(userRes.data[0]._id).update({
+      data: { getGood: _.push(goodsId) }
+    })
+  }
 
   return {
     orderId: result._id,
@@ -185,7 +198,10 @@ async function cancelOrder(event) {
   // 恢复商品状态为"在售"
   if (order.goodsInfo && order.goodsInfo._id) {
     await db.collection('goods').doc(order.goodsInfo._id).update({
-      data: { status: '1' }
+      data: {
+        seller_status: SELLER_STATUS.HAVE_PUB,
+        buyer_status: BUYER_STATUS.NONE
+      }
     })
   }
 
@@ -214,10 +230,13 @@ async function confirmOrder(event) {
     }
   })
 
-  // 更新商品状态为"已售出"
+  // 更新商品状态：双方都进入待评价
   if (order.goodsInfo && order.goodsInfo._id) {
     await db.collection('goods').doc(order.goodsInfo._id).update({
-      data: { status: '3' }
+      data: {
+        seller_status: SELLER_STATUS.WAITED_FOR_DIS,
+        buyer_status: BUYER_STATUS.WAITED_FOR_DIS
+      }
     })
   }
 

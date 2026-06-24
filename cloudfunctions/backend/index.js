@@ -15,6 +15,7 @@ const messageController = require('./modules/message/controller')
 // 引入用户和订单控制器
 const userController = require('./modules/user/controller')
 const orderController = require('./modules/order/controller')
+const bountyOrderController = require('./modules/bounty_order/controller')
 
 const routeMap = {
   'test/ping': async () => ({
@@ -45,12 +46,19 @@ const routeMap = {
    'user/updateProfile': userController.updateProfile,
    'user/favorites': userController.getFavorites,
    'user/toggleFavorite': userController.toggleFavorite,
+   'user/emailRegister': userController.emailRegister,
+   'user/verifyEmail': userController.verifyEmail,
+   'user/emailLogin': userController.emailLogin,
    // ===== 订单模块 =====
    'order/create': orderController.createOrder,
    'order/list': orderController.getOrderList,
    'order/detail': orderController.getOrderDetail,
    'order/cancel': orderController.cancelOrder,
    'order/confirm': orderController.confirmOrder,
+   // ===== 悬赏订单模块 =====
+   'bounty_order/create': bountyOrderController.createBountyOrder,
+   'bounty_order/list': bountyOrderController.getBountyOrderList,
+   'bounty_order/confirm': bountyOrderController.confirmBountyOrder,
    'goods/generateDesc': goodsController.generateDescription,
    // ===== 消息模块 =====
    'message/conversations': messageController.getConversations,

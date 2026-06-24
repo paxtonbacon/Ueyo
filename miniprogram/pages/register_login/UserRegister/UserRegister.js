@@ -1,4 +1,6 @@
 // pages/register/register.js
+const app = getApp()
+
 Page({
   data: {
     email: '',
@@ -10,47 +12,31 @@ Page({
     isLoading: false
   },
 
-  // 监听邮箱输入
   onEmailInput(e) {
-    this.setData({
-      email: e.detail.value,
-      emailError: ''
-    })
+    this.setData({ email: e.detail.value, emailError: '' })
   },
 
-  // 监听密码输入
   onPasswordInput(e) {
-    this.setData({
-      password: e.detail.value,
-      passwordError: ''
-    })
+    this.setData({ password: e.detail.value, passwordError: '' })
   },
 
-  // 监听确认密码输入
   onConfirmPasswordInput(e) {
-    this.setData({
-      confirmPassword: e.detail.value,
-      confirmPasswordError: ''
-    })
+    this.setData({ confirmPassword: e.detail.value, confirmPasswordError: '' })
   },
 
-  // 验证邮箱格式
   validateEmail(email) {
     const emailReg = /^[a-zA-Z0-9._-]+@(cau\.edu\.cn|cau\.cn)$/
     return emailReg.test(email)
   },
 
-  // 验证密码强度
   validatePassword(password) {
     return password && password.length >= 6
   },
 
-  // 验证表单
   validateForm() {
     let isValid = true
     const { email, password, confirmPassword } = this.data
     
-    // 验证邮箱
     if (!email) {
       this.setData({ emailError: '请输入农大邮箱' })
       isValid = false
@@ -61,7 +47,6 @@ Page({
       this.setData({ emailError: '' })
     }
     
-    // 验证密码
     if (!password) {
       this.setData({ passwordError: '请输入密码' })
       isValid = false
@@ -72,7 +57,6 @@ Page({
       this.setData({ passwordError: '' })
     }
     
-    // 验证确认密码
     if (!confirmPassword) {
       this.setData({ confirmPasswordError: '请再次输入密码' })
       isValid = false
@@ -86,72 +70,52 @@ Page({
     return isValid
   },
 
-  // 注册（暂用微信登录云函数，后续扩展邮箱注册）
+  // ========== 调用云函数注册 ==========
   async callRegisterApi(email, password) {
-    const loginRes = await new Promise((resolve, reject) => {
-      wx.login({ success: resolve, fail: reject });
-    });
-
     const res = await wx.cloud.callFunction({
       name: 'backend',
       data: {
-        action: 'user/wxlogin',
-        data: { code: loginRes.code, email, password }
+        action: 'user/emailRegister',
+        data: { email, password }
       }
     });
 
     const result = res.result;
-    if (result.code === 0) {
-      wx.setStorageSync('isLogin', true);
-      return { success: true, message: '注册成功', data: result.data };
+    if (result.code === 0 && result.data && result.data.token) {
+      // 保存 JWT 到全局 + 本地
+      app.saveAuth(result.data.token, {
+        userId: result.data.userId,
+        email: result.data.email,
+        authLevel: result.data.authLevel
+      });
+      return { success: true, message: result.data.message, data: result.data };
     } else {
       throw new Error(result.msg || '注册失败');
     }
   },
 
-  // 处理注册
+  // ========== 处理注册 ==========
   async handleRegister() {
-    console.log('点击注册按钮')
+    if (this.data.isLoading) return
     
-    if (this.data.isLoading) {
-      console.log('正在注册中，请勿重复点击')
-      return
-    }
-    
-    if (!this.validateForm()) {
-      console.log('表单验证失败')
-      return
-    }
+    if (!this.validateForm()) return
     
     this.setData({ isLoading: true })
     
-    const { email, password } = this.data
-    
     try {
-      const result = await this.callRegisterApi(email, password)
-      console.log('注册结果:', result)
+      const result = await this.callRegisterApi(this.data.email, this.data.password)
       
       if (result.success) {
-        wx.showToast({
-          title: '注册成功',
-          icon: 'success',
-          duration: 1500
-        })
-        
+        wx.showToast({ title: '注册成功', icon: 'success', duration: 1500 })
+        // 跳转到邮箱验证页
         setTimeout(() => {
-          wx.navigateTo({
-            url: `/pages/get_code/get_code?email=${encodeURIComponent(email)}`
-          })
+          wx.redirectTo({ url: '/pages/register_login/Email_Val/Email_Val' })
           this.setData({ isLoading: false })
         }, 1500)
       }
     } catch (error) {
       console.error('注册失败:', error)
-      wx.showToast({
-        title: error.message || '注册失败，请重试',
-        icon: 'none',
-        duration: 2000
-      })
+      wx.showToast({ title: error.message || '注册失败，请重试', icon: 'none', duration: 2000 })
       this.setData({ isLoading: false })
     }
   }

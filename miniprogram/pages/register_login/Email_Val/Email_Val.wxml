@@ -1,0 +1,53 @@
+<!--pages/register_login/Email_Val/EmailVal.wxml-->
+<navigation-bar title="Ueyo 邮箱验证" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+
+<view class="scrollarea">
+  <view class="container">
+    <!-- 主页图片 -->
+    <image class="hero-image" src="/images/hero.png" mode="aspectFit"></image>
+
+    <!-- 提示文字 -->
+    <view class="hint-text">
+      <text>验证码已发送至 {{email}}</text>
+    </view>
+
+    <!-- 验证码输入框 -->
+    <view class="form-container">
+      <input
+        class="input-field {{codeError ? 'input-error' : ''}}"
+        type="number"
+        maxlength="6"
+        placeholder="请输入6位验证码"
+        placeholder-class="placeholder-style"
+        bindinput="onCodeInput"
+        value="{{code}}"
+      />
+    </view>
+
+    <!-- 错误提示 -->
+    <view class="error-container" wx:if="{{codeError}}">
+      <text class="error-text">❌ {{codeError}}</text>
+    </view>
+
+    <!-- 验证按钮 -->
+    <button
+      type="primary"
+      bindtap="handleVerify"
+      hover-class="btn-hover"
+      loading="{{isLoading}}"
+      disabled="{{isLoading}}"
+    >{{isLoading ? '验证中...' : '验证'}}</button>
+
+    <!-- 重新发送 -->
+    <view class="resend-row">
+      <text class="resend-text" bindtap="onResendCode">
+        {{countdown > 0 ? countdown + '秒后可重新发送' : '重新发送验证码'}}
+      </text>
+    </view>
+
+    <!-- 开发提示 -->
+    <view class="dev-tip">
+      <text class="dev-tip-text">💡 开发阶段验证码统一使用 000000</text>
+    </view>
+  </view>
+</view>

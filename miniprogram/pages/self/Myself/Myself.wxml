@@ -7,12 +7,21 @@
 </view>
 
 <!-- 登录区域 -->
-<view class="login-section">
-  <view class="avatar-placeholder"></view>
-  <view class="login-info">
-    <text class="login-btn" bindtap="onTapLogin">登陆/注册</text>
-    <text class="user-tag">未知买家，未知卖家</text>
-  </view>
+<view class="login-section" bindtap="onTapLogin">
+  <block wx:if="{{isLogin}}">
+    <image class="avatar-img" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}" mode="aspectFill"></image>
+    <view class="login-info">
+      <text class="login-nickname">{{userInfo.nickName || '微信用户'}}</text>
+      <text class="user-tag">{{userInfo.email || '点击刷新资料'}}</text>
+    </view>
+  </block>
+  <block wx:else>
+    <view class="avatar-placeholder"></view>
+    <view class="login-info">
+      <text class="login-btn">登录/注册</text>
+      <text class="user-tag">点击登录，解锁全部功能</text>
+    </view>
+  </block>
 </view>
 
 <!-- 四个入口 -->

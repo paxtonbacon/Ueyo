@@ -1,4 +1,25 @@
 // pages/add/Post_add/Post_add.js
+const app = getApp()
+
+function requireAuth() {
+  const g = app && app.globalData
+  if (!g || !g.isLogin || g.authLevel < 2) {
+    wx.showModal({
+      title: '需要认证',
+      content: '请先完成邮箱验证，才能发布帖子',
+      confirmText: '去验证',
+      cancelText: '取消',
+      success: (res) => {
+        if (res.confirm) {
+          wx.navigateTo({ url: '/pages/register_login/Email_Val/Email_Val' })
+        }
+      }
+    })
+    return false
+  }
+  return true
+}
+
 Page({
   data: {
     title: '',
@@ -12,6 +33,10 @@ Page({
 
   onLoad(options) {
     this.initNavBarHeight();
+    if (!requireAuth()) {
+      wx.navigateBack({ delta: 1, fail: () => wx.switchTab({ url: '/pages/self/Myself/Myself' }) });
+      return;
+    }
     // 从页面参数获取话题ID（如从话题页跳转时传入）
     if (options.topicId) {
       this.setData({ topicId: options.topicId });
@@ -141,6 +166,7 @@ Page({
       const res = await wx.cloud.callFunction({
         name: 'backend',
         data: {
+          __auth: (app && app.globalData && app.globalData.token) || '',
           action: 'social/post/publish',
           data: requestData
         }

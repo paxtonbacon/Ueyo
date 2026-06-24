@@ -1,10 +1,8 @@
 // modules/bounty/service.js
 const { validateBountyId, validatePublish } = require('./validator')
+const { PUT_STATUS, GET_STATUS } = require('../../constants/enums')
 
-// ========== 枚举白名单（对齐数据库） ==========
-const BOUNTY_STATUS_MAP = { '1': true, '2': true, '3': true, '4': true }
-
-// ========== 1. 发布悬赏 ==========
+// ========== 发布悬赏 ==========
 async function publishBounty(event) {
   const db = event.db
   const OPENID = event.OPENID
@@ -29,12 +27,21 @@ async function publishBounty(event) {
       expectedPrice: priceInFen,
       deliveryRequirement: deliveryRequirement || '',
       images: images || [],
-      status: '1', // 默认"待接取"
+      put_status: PUT_STATUS.HAVEN_PUB,     // 已发布
+      get_status: GET_STATUS.NONE,           // 无接收者
       buyerInfo: { _id: OPENID },
-      takerInfo: null,
       createdAt: Date.now()
     }
   })
+
+  // 将悬赏ID追加到用户发布列表
+  const _ = db.command
+  const userRes = await db.collection('users').where({ _openid: OPENID }).get()
+  if (userRes.data.length > 0) {
+    await db.collection('users').doc(userRes.data[0]._id).update({
+      data: { publishedTasks: _.push(result._id) }
+    })
+  }
 
   return {
     bountyId: result._id,
@@ -47,7 +54,7 @@ async function getBountyList(event) {
   const db = event.db
   const { page = 1, pageSize = 10, category } = event.data || {}
 
-  const where = { status: '1' } // 仅展示待接取
+  const where = { put_status: PUT_STATUS.HAVEN_PUB } // 仅展示待接取悬赏
   if (category) where.category = category
 
   const res = await db.collection('bounties')
@@ -185,7 +192,7 @@ async function takeBounty(event) {
   const bountyRes = await db.collection('bounties').doc(RewardId).get()
   const bounty = bountyRes.data
   if (!bounty) throw new Error('悬赏不存在')
-  if (bounty.status !== '1') {
+  if (bounty.put_status !== PUT_STATUS.HAVEN_PUB || bounty.get_status !== GET_STATUS.NONE) {
     throw new Error('该悬赏已被接取或已过期')
   }
 
@@ -194,20 +201,11 @@ async function takeBounty(event) {
     throw new Error('不能接取自己发布的悬赏')
   }
 
-  // ========== 3. 使用 set 操作符一步到位更新 ==========
-  // 使用 _.set() 操作符，直接将 takerInfo 设置为 { _id: OPENID }
-  const _ = db.command
-  await db.collection('bounties').doc(RewardId).update({
-    data: {
-      status: '2',
-      takerInfo: _.set({ _id: OPENID }),
-      updatedAt: Date.now()
-    }
-  })
-
+  // 注意：正式接单请使用 bounty_order/create（包含完整订单创建 + 状态更新 + 用户绑定）
+  // bounty/take 仅保留基础验证，不修改数据库
   return {
     bountyId: RewardId,
-    message: '接单成功，请尽快与发布者联系'
+    message: '验证通过，请使用 bounty_order/create 完成接单'
   }
 }
 

@@ -135,8 +135,24 @@ Page({
     }
   },
 
-  // 确认接单（调用云函数 bounty/take）
+  // 确认接单（调用云函数 bounty_order/create）
   onAcceptOrder() {
+    const app = getApp();
+    const g = app && app.globalData;
+    if (!g || !g.isLogin || g.authLevel < 2) {
+      wx.showModal({
+        title: '需要认证',
+        content: '请先完成邮箱验证，才能接取悬赏',
+        confirmText: '去验证',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({ url: '/pages/register_login/Email_Val/Email_Val' });
+          }
+        }
+      });
+      return;
+    }
     wx.showModal({
       title: '确认接单',
       content: '您确定要接取此悬赏吗？接单后需按照约定完成交易。',
@@ -148,8 +164,8 @@ Page({
             const result = await wx.cloud.callFunction({
               name: 'backend',
               data: {
-                action: 'bounty/take',
-                data: { RewardId: this.data.rewardInfo.id }
+                action: 'bounty_order/create',
+                data: { bountyId: this.data.rewardInfo.id }
               }
             });
             const ret = result.result;
