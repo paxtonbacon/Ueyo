@@ -1,21 +1,28 @@
 // components/order_detail/goods/1waited_for_pay/1waited_for_pay.js
 Component({
   properties: { list: { type: Array, value: [] } },
-  lifetimes: {
-    attached() {
-      if (!this.properties.list || this.properties.list.length === 0) {
-        this.setData({ list: this.getMockData() });
-      }
-    }
-  },
   methods: {
-    getMockData() {
-      return [
-        { id: '101', title: '复古运动鞋', amount: 129, orderNo: 'ORD20240601001', image: '/images/default-goods.png' },
-        { id: '102', title: '纯棉T恤', amount: 59, orderNo: 'ORD20240601002', image: '/images/default-goods.png' }
-      ];
+    onCancel(e) {
+      const id = e.currentTarget.dataset.id;
+      wx.showModal({ title:'确认取消', content:'取消后商品将重新上架', success: async r=>{
+        if(!r.confirm) return;
+        try{
+          const res=await wx.cloud.callFunction({name:'backend',data:{action:'goods/updateStatus',data:{goodsId:id,action:'cancel'}}});
+          if(res.result.code===0){wx.showToast({title:'已取消'});this.triggerEvent('cancel',{id});}
+          else wx.showToast({title:res.result.msg,icon:'none'});
+        }catch(e){wx.showToast({title:'网络异常',icon:'none'});}
+      }});
     },
-    onCancel(e) { this.triggerEvent('cancel', { id: e.currentTarget.dataset.id }); },
-    onPay(e) { this.triggerEvent('pay', { id: e.currentTarget.dataset.id }); }
+    onPay(e) {
+      const id = e.currentTarget.dataset.id;
+      wx.showModal({ title:'确认付款', content:'模拟支付流程', success: async r=>{
+        if(!r.confirm) return;
+        try{
+          const res=await wx.cloud.callFunction({name:'backend',data:{action:'goods/updateStatus',data:{goodsId:id,action:'pay'}}});
+          if(res.result.code===0){wx.showToast({title:'已付款'});this.triggerEvent('pay',{id});}
+          else wx.showToast({title:res.result.msg,icon:'none'});
+        }catch(e){wx.showToast({title:'网络异常',icon:'none'});}
+      }});
+    }
   }
 });

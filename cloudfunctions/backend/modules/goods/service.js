@@ -10,6 +10,10 @@ const CONDITION_MAP = { '1': true, '2': true, '3': true, '4': true }
 
 const isValidEnum = (value, map) => map[value] === true
 
+// ========== 新旧程度映射 ==========
+const CONDITION_TEXT = { '1': '全新', '2': '几乎全新', '3': '轻微痕迹', '4': '明显痕迹' }
+function mapCondition(v) { return CONDITION_TEXT[v] || v || '' }
+
 // ========== 1. 商品发布 ==========
 async function publishGoods(event) {
   const db = event.db
@@ -84,11 +88,11 @@ async function getGoodsDetail(event) {
     } catch (e) { /* 忽略 */ }
   }
 
-  // 评论查询
+  // 评论查询: detail_type=2 表示商品评论
   let comments = []
   try {
     const commentsRes = await db.collection('topics')
-      .where({ linkedGoodsInfo: { _id: GoodId }, type: '3' })
+      .where({ detail_type: 2, postId: GoodId, type: '3' })
       .orderBy('createdAt', 'desc')
       .limit(20)
       .get()
@@ -135,7 +139,7 @@ async function getGoodsDetail(event) {
           id: g._id,
           title: g.title || '',
           price: (g.price || 0) / 100,
-          condition: g.condition || '',
+          condition: mapCondition(g.condition),
           sellerId: g.sellerInfo?._id || '',
           sellerAvatarCDN: '',
           sellerName: g.sellerInfo?.nickName || '',
@@ -152,7 +156,7 @@ async function getGoodsDetail(event) {
     sellerName: sellerInfo.nickName || '匿名用户',
     PictureCDN: goods.images || [],
     price: (goods.price || 0) / 100,
-    condition: goods.condition || '',
+    condition: mapCondition(goods.condition),
     desc: goods.description || '',
     tradeWays: goods.tradeType || '',
     comments,
@@ -186,7 +190,7 @@ async function getGoodsList(event) {
       id: g._id,
       title: g.title || '',
       price: (g.price || 0) / 100,
-      condition: g.condition || '',
+      condition: mapCondition(g.condition),
       sellerId: g.sellerInfo?._id || '',
       sellerAvatarCDN: '',
       sellerName: g.sellerInfo?.nickName || '',
@@ -220,9 +224,119 @@ async function generateGoodsDescription(event) {
   }
 }
 
+// ========== 5. 商品状态流转（卖方/买方操作按钮） ==========
+async function updateGoodsStatus(event) {
+  const db = event.db
+  const OPENID = event.OPENID
+  const { goodsId, action } = event.data || {}
+
+  if (!OPENID) throw new Error('无法获取当前用户身份，请重新登录')
+  validateGoodsId(goodsId)
+
+  const goodsRes = await db.collection('goods').doc(goodsId).get()
+  const goods = goodsRes.data
+  if (!goods) throw new Error('商品不存在')
+
+  switch (action) {
+
+    // ====== 卖方操作 ======
+    case 'shelve':  // 下架（1have_pub → 4all_down）
+      if (goods.sellerInfo?._id !== OPENID) throw new Error('只有卖家可以下架')
+      await db.collection('goods').doc(goodsId).update({
+        data: { seller_status: SELLER_STATUS.ALL_DOWN, buyer_status: BUYER_STATUS.HAVE_DOWN }
+      })
+      return { message: '已下架', seller_status: SELLER_STATUS.ALL_DOWN }
+
+    case 'deliver':  // 发货（2waited_for_del → 3waited_for_dis）
+      if (goods.sellerInfo?._id !== OPENID) throw new Error('只有卖家可以发货')
+      if (goods.seller_status !== SELLER_STATUS.WAITED_FOR_DEL) throw new Error('当前状态不允许发货')
+      await db.collection('goods').doc(goodsId).update({
+        data: { seller_status: SELLER_STATUS.WAITED_FOR_DIS }
+      })
+      return { message: '已发货', seller_status: SELLER_STATUS.WAITED_FOR_DIS }
+
+    // ====== 买方操作 ======
+    case 'cancel': {  // 取消订单（1waited_for_pay）
+      // 验证是否是当前买家
+      const buyerOpenid = OPENID
+      // 1. 当前商品标记为取消
+      await db.collection('goods').doc(goodsId).update({
+        data: { seller_status: SELLER_STATUS.ALL_DOWN, buyer_status: BUYER_STATUS.HAVE_DOWN }
+      })
+      // 2. 复制一份新商品（重新上架）
+      const _ = db.command
+      const newGoods = { ...goods }
+      delete newGoods._id
+      newGoods.seller_status = SELLER_STATUS.HAVE_PUB
+      newGoods.buyer_status = BUYER_STATUS.NONE
+      newGoods.createdAt = Date.now()
+      const newRes = await db.collection('goods').add({ data: newGoods })
+      // 3. 更新卖家的 publishedGoods（移除旧ID，添加新ID）
+      const sellerRes = await db.collection('users').where({ _openid: goods.sellerInfo?._id }).get()
+      if (sellerRes.data.length > 0) {
+        const seller = sellerRes.data[0]
+        await db.collection('users').doc(seller._id).update({
+          data: { publishedGoods: _.pull(goodsId) }
+        })
+        await db.collection('users').doc(seller._id).update({
+          data: { publishedGoods: _.push(newRes._id) }
+        })
+      }
+      // 4. 移除买家的 getGood
+      const buyerRes = await db.collection('users').where({ _openid: buyerOpenid }).get()
+      if (buyerRes.data.length > 0) {
+        await db.collection('users').doc(buyerRes.data[0]._id).update({
+          data: { getGood: _.pull(goodsId) }
+        })
+      }
+      return { message: '已取消，商品已重新上架', newGoodsId: newRes._id }
+    }
+
+    case 'pay':  // 付款（1waited_for_pay → 2waited_for_get）
+      if (goods.buyer_status !== BUYER_STATUS.WAITED_FOR_PAY) throw new Error('当前状态不允许付款')
+      await db.collection('goods').doc(goodsId).update({
+        data: { buyer_status: BUYER_STATUS.WAITED_FOR_GET }
+      })
+      return { message: '已付款' }
+
+    case 'refund': {  // 退款（2waited_for_get → 4have_down，卖家→4all_down）
+      if (goods.buyer_status !== BUYER_STATUS.WAITED_FOR_GET) throw new Error('当前状态不允许退款')
+      await db.collection('goods').doc(goodsId).update({
+        data: { buyer_status: BUYER_STATUS.HAVE_DOWN, seller_status: SELLER_STATUS.ALL_DOWN }
+      })
+      return { message: '已退款' }
+    }
+
+    case 'confirm':  // 确认收货（2waited_for_get → 3waited_for_dis）
+      if (goods.buyer_status !== BUYER_STATUS.WAITED_FOR_GET) throw new Error('当前状态不允许确认收货')
+      await db.collection('goods').doc(goodsId).update({
+        data: { buyer_status: BUYER_STATUS.WAITED_FOR_DIS }
+      })
+      return { message: '已确认收货，请评价' }
+
+    case 'evaluateSeller':  // 卖方评价完成 → seller_status变为4all_down
+      if (goods.sellerInfo?._id !== OPENID) throw new Error('只有卖家可以操作')
+      await db.collection('goods').doc(goodsId).update({
+        data: { seller_status: SELLER_STATUS.ALL_DOWN }
+      })
+      return { message: '评价完成' }
+
+    case 'evaluateBuyer':  // 买方评价完成 → buyer_status变为4have_down
+      if (goods.buyer_status !== BUYER_STATUS.WAITED_FOR_DIS) throw new Error('当前状态不允许')
+      await db.collection('goods').doc(goodsId).update({
+        data: { buyer_status: BUYER_STATUS.HAVE_DOWN }
+      })
+      return { message: '评价完成' }
+
+    default:
+      throw new Error('未知操作: ' + action)
+  }
+}
+
 module.exports = {
   getGoodsDetail,
   getGoodsList,
   publishGoods,
-  generateGoodsDescription
+  generateGoodsDescription,
+  updateGoodsStatus
 }

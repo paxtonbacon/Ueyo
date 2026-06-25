@@ -46,7 +46,7 @@
     <!-- 价格与成新 -->
     <view class="price-section">
       <text class="price">¥{{goodsInfo.price}}</text>
-      <text class="condition">{{goodsInfo.condition}}成新</text>
+      <text class="condition">{{goodsInfo.condition}}</text>
     </view>
 
     <!-- 标题 -->
@@ -63,10 +63,12 @@
 
     <comment-section 
       id="commentSection"
-      postId="{{postId}}"
-      bottomBarHeight="calc({{bottomBarHeight}}px + {{safeAreaBottom}}px)"
+      postId="{{goodsInfo.id}}"
+      detailType="{{2}}"
+      externalComments="{{comments}}"
       bind:reply="onReplyComment"
       bind:like="onCommentLike"
+      bind:refresh="onRefreshGoods"
     />
 
     <!-- ========= 底部商品推荐 ========= -->

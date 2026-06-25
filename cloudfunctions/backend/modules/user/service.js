@@ -345,6 +345,116 @@ async function toggleFavorite(event) {
   }
 }
 
+// ========== 6. 我的商品（发布+购买，按状态分类） ==========
+async function myGoods(event) {
+  const db = event.db
+  const OPENID = event.OPENID
+  if (!OPENID) throw new Error('用户未登录')
+
+  const userRes = await db.collection('users').where({ _openid: OPENID }).get()
+  const user = userRes.data[0]
+  if (!user) throw new Error('用户不存在')
+
+  const publishedIds = user.publishedGoods || []
+  const boughtIds = user.getGood || []
+
+  const published = { '1have_pub': [], '2waited_for_del': [], '3waited_for_dis': [], '4all_down': [] }
+  const bought = { 'none': [], '1waited_for_pay': [], '2waited_for_get': [], '3waited_for_dis': [], '4have_down': [] }
+
+  // 查询发布的商品
+  if (publishedIds.length > 0) {
+    const goodsRes = await db.collection('goods').where({ _id: db.command.in(publishedIds) }).get()
+    for (const g of (goodsRes.data || [])) {
+      const item = formatGoodsItem(g)
+      const status = g.seller_status || '1have_pub'
+      if (published[status]) published[status].push(item)
+    }
+  }
+
+  // 查询购买的商品
+  if (boughtIds.length > 0) {
+    const goodsRes = await db.collection('goods').where({ _id: db.command.in(boughtIds) }).get()
+    for (const g of (goodsRes.data || [])) {
+      const item = formatGoodsItem(g)
+      const status = g.buyer_status || '1waited_for_pay'
+      if (bought[status]) bought[status].push(item)
+    }
+  }
+
+  return { published, bought }
+}
+
+// ========== 7. 我的悬赏（发布+接取，按状态分类） ==========
+async function myBounties(event) {
+  const db = event.db
+  const OPENID = event.OPENID
+  if (!OPENID) throw new Error('用户未登录')
+
+  const userRes = await db.collection('users').where({ _openid: OPENID }).get()
+  const user = userRes.data[0]
+  if (!user) throw new Error('用户不存在')
+
+  const publishedIds = user.publishedTasks || []
+  const takenIds = user.acceptTasks || []
+
+  const published = { '1haven_pub': [], '2waited_for_dis': [], '3all_down': [] }
+  const taken = { 'none': [], '1waited_for_do': [], '2waited_for_dis': [], '3have_down': [] }
+
+  // 查询发布的悬赏
+  if (publishedIds.length > 0) {
+    const bountyRes = await db.collection('bounties').where({ _id: db.command.in(publishedIds) }).get()
+    for (const b of (bountyRes.data || [])) {
+      const item = formatBountyItem(b)
+      const status = b.put_status || '1haven_pub'
+      if (published[status]) published[status].push(item)
+    }
+  }
+
+  // 查询接取的悬赏
+  if (takenIds.length > 0) {
+    const bountyRes = await db.collection('bounties').where({ _id: db.command.in(takenIds) }).get()
+    for (const b of (bountyRes.data || [])) {
+      const item = formatBountyItem(b)
+      const status = b.get_status || '1waited_for_do'
+      if (taken[status]) taken[status].push(item)
+    }
+  }
+
+  return { published, taken }
+}
+
+// ========== 格式化辅助 ==========
+function formatGoodsItem(g) {
+  const CT = { '1': '全新', '2': '几乎全新', '3': '轻微痕迹', '4': '明显痕迹' }
+  return {
+    id: g._id,
+    title: g.title || '',
+    name: g.title || '',
+    price: (g.price || 0) / 100,
+    amount: (g.price || 0) / 100,
+    condition: CT[g.condition] || g.condition || '',
+    tradeType: g.tradeType || '',
+    image: g.images?.[0] || '',
+    firstPictureCDN: g.images?.[0] || '',
+    orderNo: '',
+    finalStatus: g.seller_status === '4all_down' ? '已完成' : (g.seller_status === '2waited_for_del' ? '待发货' : '')
+  }
+}
+
+function formatBountyItem(b) {
+  return {
+    id: b._id,
+    title: b.title || '',
+    reward: (b.expectedPrice || 0) / 100,
+    amount: (b.expectedPrice || 0) / 100,
+    tradeType: b.deliveryRequirement || '面交/快递均可',
+    image: b.images?.[0] || '',
+    firstPictureCDN: b.images?.[0] || '',
+    orderNo: '',
+    finalStatus: b.put_status === '3all_down' ? '已完成' : (b.put_status === '1haven_pub' ? '待接取' : '')
+  }
+}
+
 module.exports = {
   wxLogin,
   emailRegister,
@@ -353,5 +463,7 @@ module.exports = {
   getProfile,
   updateProfile,
   getFavorites,
-  toggleFavorite
+  toggleFavorite,
+  myGoods,
+  myBounties
 }

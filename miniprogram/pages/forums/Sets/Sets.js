@@ -11,16 +11,16 @@ Page({
 
   onReady() {
     // 获取子组件实例
-    this.topicComponent = this.selectComponent('.topic');
-    this.postComponent = this.selectComponent('.post');
+    this.topicComponent = this.selectComponent('.topic-component');
+    this.postComponent = this.selectComponent('.post-component');
   },
 
   // ========== tab-container 事件处理 ==========
-  
-  // Tab 切换
+  _currentTab: 0,
+
   onTabChange(e) {
     const { index } = e.detail;
-    // 可选：切换时主动刷新当前 tab 的数据
+    this._currentTab = index;
     if (index === 0 && this.topicComponent?.refresh) {
       this.topicComponent.refresh();
     } else if (index === 1 && this.postComponent?.refresh) {
@@ -31,10 +31,7 @@ Page({
   // 下拉刷新（由 tab-container 触发）
   onRefresh(e) {
     const { done } = e.detail || {};
-    const currentTab = this.data.tabsIndex || 0; // 需要记录当前 tab，或者从 tab-container 获取
-    // 简便方法：通过 selectComponent 判断当前可见区域？或者从 tab-container 自定义事件中拿 index
-    // 这里假设 tab-container 在 refresh 事件 detail 中也会带 index，如果没有则使用 this.data._currentTab
-    // 更稳妥：在 onTabChange 中记录 currentTab
+    const currentTab = this._currentTab || 0; // 修正：使用 this._currentTab
     let refreshPromise = null;
     if (currentTab === 0 && this.topicComponent?.refresh) {
       refreshPromise = this.topicComponent.refresh();
@@ -51,7 +48,7 @@ Page({
   // 上拉加载更多（由 tab-container 触发）
   onLoadMore(e) {
     const { done } = e.detail || {};
-    const currentTab = this.data._currentTab || 0;
+    const currentTab = this._currentTab || 0;
     let loadPromise = null;
     if (currentTab === 0 && this.topicComponent?.loadMore) {
       // 话题组件一般没有分页，可忽略
@@ -101,13 +98,5 @@ Page({
     const { id, isLiked } = e.detail;   // 修正：子组件传的是 { id, isLiked }
     console.log(`帖子 ${id} 点赞状态变为: ${isLiked}`);
     // 调用云函数同步后端...
-  },
-
-  // 辅助：记录当前 tab（在 onTabChange 中更新）
-  _currentTab: 0,
-  onTabChange(e) {
-    const { index } = e.detail;
-    this._currentTab = index;
-    // 你的原有逻辑...
   }
 });

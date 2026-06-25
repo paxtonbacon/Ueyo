@@ -42,3 +42,13 @@ exports.toggleFavorite = catchAsync(async (event) => {
   const data = await userService.toggleFavorite(event)
   return SUCCESS(data)
 })
+
+exports.myGoods = catchAsync(async (event) => {
+  const data = await userService.myGoods(event)
+  return SUCCESS(data)
+})
+
+exports.myBounties = catchAsync(async (event) => {
+  const data = await userService.myBounties(event)
+  return SUCCESS(data)
+})

@@ -27,6 +27,7 @@
     "pages/add/Goods_add/Goods_add",
     "pages/add/Reward_add/Reward_add",
     "pages/add/Topic_add/Topic_add",
+    "pages/add/Evaluate_add/Evaluate_add",
     "pages/self/Person_setting/Person_setting",
     "pages/self/Setting/Setting",
     "pages/self/History/History",

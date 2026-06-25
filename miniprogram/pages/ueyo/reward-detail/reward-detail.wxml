@@ -55,13 +55,14 @@
       <text class="trade-value">{{rewardInfo.tradeWays}}</text>
     </view>
 
-    <!-- ========= 评论模块（预留） ========= -->
     <comment-section 
       id="commentSection"
-      postId="{{postId}}"
-      bottomBarHeight="calc({{bottomBarHeight}}px + {{safeAreaBottom}}px)"
+      postId="{{rewardInfo.id}}"
+      detailType="{{3}}"
+      externalComments="{{comments}}"
       bind:reply="onReplyComment"
       bind:like="onCommentLike"
+      bind:refresh="onRefreshReward"
     />
 
     <!-- ========= 底部悬赏推荐 ========= -->

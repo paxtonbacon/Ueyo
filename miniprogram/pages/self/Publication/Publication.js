@@ -36,64 +36,40 @@ Page({
     this.loadAllData();
   },
 
-  // 加载所有数据（调用云函数 order/list）
+  // 加载所有数据（调用 user/myGoods + user/myBounties）
   async loadAllData() {
     try {
-      // 商品订单（作为卖家）
+      // 我的商品（发布）
       const goodsRes = await wx.cloud.callFunction({
         name: 'backend',
-        data: { action: 'order/list', data: { role: 'seller', page: 1, pageSize: 50 } }
+        data: { action: 'user/myGoods', data: {} }
       });
-      const orders = (goodsRes.result.code === 0 ? goodsRes.result.data.orders : []) || [];
+      if (goodsRes.result.code === 0) {
+        const p = goodsRes.result.data.published || {};
+        this.setData({
+          goods_pub_list: p['1have_pub'] || [],
+          goods_delivery_list: p['2waited_for_del'] || [],
+          goods_evaluate_list: p['3waited_for_dis'] || [],
+          goods_complete_list: p['4all_down'] || []
+        });
+      }
 
-      const pubList = orders.filter(o => o.orderStatus === '1');
-      const deliveryList = orders.filter(o => o.orderStatus === '2');
-      const evaluateList = orders.filter(o => o.orderStatus === '3');
-      const completeList = orders.filter(o => o.orderStatus === '4');
-
-      this.setData({
-        goods_pub_list: pubList.map(this.formatGoodsItem),
-        goods_delivery_list: deliveryList.map(this.formatGoodsItem),
-        goods_evaluate_list: evaluateList.map(this.formatGoodsItem),
-        goods_complete_list: completeList.map(this.formatGoodsItem)
-      });
-
-      // 悬赏订单（作为买家）
+      // 我的悬赏（发布）
       const bountyRes = await wx.cloud.callFunction({
         name: 'backend',
-        data: { action: 'order/list', data: { role: 'buyer', page: 1, pageSize: 50 } }
+        data: { action: 'user/myBounties', data: {} }
       });
-      const bountyOrders = (bountyRes.result.code === 0 ? bountyRes.result.data.orders : []) || [];
-
-      this.setData({
-        rewards_pub_list: bountyOrders.filter(o => o.orderStatus === '1').map(this.formatRewardItem),
-        rewards_evaluate_list: bountyOrders.filter(o => o.orderStatus === '3').map(this.formatRewardItem),
-        rewards_complete_list: bountyOrders.filter(o => o.orderStatus === '4').map(this.formatRewardItem)
-      });
+      if (bountyRes.result.code === 0) {
+        const p = bountyRes.result.data.published || {};
+        this.setData({
+          rewards_pub_list: p['1haven_pub'] || [],
+          rewards_evaluate_list: p['2waited_for_dis'] || [],
+          rewards_complete_list: p['3all_down'] || []
+        });
+      }
     } catch (err) {
       console.error('加载发布数据失败:', err);
     }
-  },
-
-  formatGoodsItem(o) {
-    return {
-      id: o.orderId,
-      name: o.goodsTitle || '',
-      price: o.amount || 0,
-      condition: '',
-      tradeType: '',
-      image: o.firstPictureCDN || ''
-    };
-  },
-
-  formatRewardItem(o) {
-    return {
-      id: o.orderId,
-      title: o.goodsTitle || '',
-      reward: o.amount || 0,
-      tradeType: '',
-      image: o.firstPictureCDN || ''
-    };
   },
 
   // 外层Tab切换

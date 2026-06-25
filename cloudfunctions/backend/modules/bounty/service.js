@@ -118,13 +118,13 @@ async function getBountyDetail(event) {
     } catch (e) { /* 忽略 */ }
   }
 
-  // 3. 查询评论（复用 topics 表，约定 linkedGoodsInfo 存悬赏 ID）
-  //    注意：这里用 linkedGoodsInfo 存储 { _id: RewardId }，与商品评论逻辑一致
+  // 3. 查询评论: detail_type=3 表示悬赏评论
   let comments = []
   try {
     const commentsRes = await db.collection('topics')
       .where({
-        linkedGoodsInfo: { _id: RewardId },
+        detail_type: 3,
+        postId: RewardId,
         type: '3'
       })
       .orderBy('createdAt', 'desc')
@@ -209,9 +209,98 @@ async function takeBounty(event) {
   }
 }
 
+// ========== 5. 悬赏状态流转 ==========
+async function updateBountyStatus(event) {
+  const db = event.db
+  const OPENID = event.OPENID
+  const { bountyId, action } = event.data || {}
+
+  if (!OPENID) throw new Error('无法获取当前用户身份，请重新登录')
+  validateBountyId(bountyId)
+
+  const bountyRes = await db.collection('bounties').doc(bountyId).get()
+  const bounty = bountyRes.data
+  if (!bounty) throw new Error('悬赏不存在')
+
+  switch (action) {
+
+    // ====== 发布方操作 ======
+    case 'cancel':  // 取消发布（put=1haven_pub → put=3all_down, get=3have_down）
+      if (bounty.buyerInfo?._id !== OPENID) throw new Error('只有发布者可以取消')
+      await db.collection('bounties').doc(bountyId).update({
+        data: { put_status: PUT_STATUS.ALL_DOWN, get_status: GET_STATUS.HAVE_DOWN }
+      })
+      return { message: '已取消' }
+
+    case 'failreport': {  // 失败汇报（put=2waited_for_dis → put=3all_down, get=3have_down + 复制新悬赏）
+      if (bounty.buyerInfo?._id !== OPENID) throw new Error('只有发布者可以操作')
+      await db.collection('bounties').doc(bountyId).update({
+        data: { put_status: PUT_STATUS.ALL_DOWN, get_status: GET_STATUS.HAVE_DOWN }
+      })
+      // 复制新悬赏重新上架
+      const _ = db.command
+      const newBounty = { ...bounty }
+      delete newBounty._id
+      newBounty.put_status = PUT_STATUS.HAVEN_PUB
+      newBounty.get_status = GET_STATUS.NONE
+      newBounty.takerInfo = null
+      newBounty.createdAt = Date.now()
+      const newRes = await db.collection('bounties').add({ data: newBounty })
+      // 更新发布者的 publishedTasks
+      const userRes = await db.collection('users').where({ _openid: OPENID }).get()
+      if (userRes.data.length > 0) {
+        await db.collection('users').doc(userRes.data[0]._id).update({ data: { publishedTasks: _.pull(bountyId) } })
+        await db.collection('users').doc(userRes.data[0]._id).update({ data: { publishedTasks: _.push(newRes._id) } })
+      }
+      // 移除接单者的 acceptTasks
+      if (bounty.takerInfo?._id) {
+        const takerRes = await db.collection('users').doc(bounty.takerInfo._id).get()
+        if (takerRes.data) {
+          await db.collection('users').doc(bounty.takerInfo._id).update({ data: { acceptTasks: _.pull(bountyId) } })
+        }
+      }
+      return { message: '已汇报失败，悬赏已重新上架', newBountyId: newRes._id }
+    }
+
+    // ====== 接取方操作 ======
+    case 'takerCancel': {  // 接取方取消（get=1waited_for_do → put=3all_down, get=3have_down + 复制）
+      if (bounty.takerInfo?._id !== OPENID) throw new Error('只有接单者可以取消')
+      await db.collection('bounties').doc(bountyId).update({
+        data: { put_status: PUT_STATUS.ALL_DOWN, get_status: GET_STATUS.HAVE_DOWN }
+      })
+      const _ = db.command
+      const newBounty = { ...bounty }
+      delete newBounty._id
+      newBounty.put_status = PUT_STATUS.HAVEN_PUB
+      newBounty.get_status = GET_STATUS.NONE
+      newBounty.takerInfo = null
+      newBounty.createdAt = Date.now()
+      const newRes = await db.collection('bounties').add({ data: newBounty })
+      // 更新发布者
+      if (bounty.buyerInfo?._id) {
+        const putterRes = await db.collection('users').doc(bounty.buyerInfo._id).get()
+        if (putterRes.data) {
+          await db.collection('users').doc(bounty.buyerInfo._id).update({ data: { publishedTasks: _.pull(bountyId) } })
+          await db.collection('users').doc(bounty.buyerInfo._id).update({ data: { publishedTasks: _.push(newRes._id) } })
+        }
+      }
+      // 移除接单者
+      const takerRes = await db.collection('users').where({ _openid: OPENID }).get()
+      if (takerRes.data.length > 0) {
+        await db.collection('users').doc(takerRes.data[0]._id).update({ data: { acceptTasks: _.pull(bountyId) } })
+      }
+      return { message: '已取消，悬赏已重新上架', newBountyId: newRes._id }
+    }
+
+    default:
+      throw new Error('未知操作: ' + action)
+  }
+}
+
 module.exports = {
   publishBounty,
   getBountyList,
   getBountyDetail,
-  takeBounty
+  takeBounty,
+  updateBountyStatus
 }

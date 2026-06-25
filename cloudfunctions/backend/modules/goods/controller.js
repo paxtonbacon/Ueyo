@@ -24,3 +24,9 @@ exports.generateDescription = catchAsync(async (event) => {
   const data = await goodsService.generateGoodsDescription(event)
   return SUCCESS(data)
 })
+
+// ========== 新增：商品状态流转 ==========
+exports.updateGoodsStatus = catchAsync(async (event) => {
+  const data = await goodsService.updateGoodsStatus(event)
+  return SUCCESS(data)
+})

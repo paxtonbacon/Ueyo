@@ -48,9 +48,11 @@
     <comment-section 
       id="commentSection"
       postId="{{postId}}"
-      bottomBarHeight="calc({{bottomBarHeight}}px + {{safeAreaBottom}}px)"
+      detailType="{{1}}"
+      externalComments="{{comments}}"
       bind:reply="onReplyComment"
       bind:like="onCommentLike"
+      bind:refresh="onRefreshPost"
     />
   </scroll-view>
 

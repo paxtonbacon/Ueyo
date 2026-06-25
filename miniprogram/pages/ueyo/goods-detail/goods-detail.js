@@ -19,6 +19,8 @@ Page({
       comments: []
     }
   },
+  comments: [],  // 顶层，传给 comment-section
+  postId: '',
 
   onLoad(options) {
     const id = options.id;
@@ -97,6 +99,7 @@ Page({
       };
       this.setData({
         goodsInfo,
+        comments: data.comments || [],
         isFavorited: data.is_favorited || false
       });
     } catch (err) {
@@ -204,5 +207,9 @@ Page({
         }
       }
     });
+  },
+
+  onRefreshGoods() {
+    if (this.data.goodsInfo.id) this.loadGoodsData(this.data.goodsInfo.id);
   }
 });

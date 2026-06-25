@@ -11,7 +11,7 @@
       <text class="goods-price">¥{{item.price}}</text>
       <!-- 第三行：新旧程度、交易方式 -->
       <view class="goods-meta">
-        <text class="meta-item" wx:if="{{item.condition}}">{{item.condition}}成新</text>
+        <text class="meta-item" wx:if="{{item.condition}}">{{item.condition}}</text>
         <text class="meta-item" wx:if="{{item.tradeType}}">{{item.tradeType}}</text>
       </view>
       <!-- 底部按钮：进行评价 -->

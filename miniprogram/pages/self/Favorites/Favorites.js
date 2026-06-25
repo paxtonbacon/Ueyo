@@ -55,33 +55,36 @@ Page({
     }
   },
 
-  // 列表项点击（商品/悬赏/帖子）
-  onItemTap(e) {
-    const { item, type } = e.detail;
-    console.log('点击浏览记录', type, item);
-    // 根据类型跳转不同详情页
-    wx.showToast({ title: `查看${type}详情`, icon: 'none' });
+  // 帖子卡片点击
+  onCardTap(e) {
+    const { id } = e.detail;
+    wx.navigateTo({
+      url: `/pages/forums/Post_detail/Post_detail?id=${id}`
+    });
   },
 
-  // 用户头像点击（仅帖子）
+  // 帖子用户头像/昵称点击
   onUserTap(e) {
     const { userId } = e.detail;
-    console.log('点击用户', userId);
-    wx.showToast({ title: '查看用户主页', icon: 'none' });
+    wx.navigateTo({
+      url: `/pages/user-profile/user-profile?uid=${userId}`
+    });
   },
 
-  // 点赞（仅帖子）
+  // 点赞事件
   onLike(e) {
     const { id, isLiked } = e.detail;
-    console.log('点赞', id, isLiked);
+    console.log(`帖子 ${id} 点赞状态变为: ${isLiked}`);
   },
 
   // 话题点击
   onTopicTap(e) {
     const { topic } = e.detail;
-    console.log('点击话题', topic);
-    // 可根据 topic.id 跳转
-    wx.showToast({ title: `进入话题：${topic.title}`, icon: 'none' });
+    const id = topic.id;
+    console.log('点击话题:', topic);
+    wx.navigateTo({
+      url: `/pages/forums/Topic_products/Topic_products?id=${id}&title=${topic.name}`
+    });
   },
 
   // 以下是各个子组件的刷新/加载更多事件（如果组件内部未触发，可留空）

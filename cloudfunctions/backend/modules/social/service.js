@@ -188,11 +188,11 @@ async function getPostDetail(event) {
     } catch (e) { /* 忽略 */ }
   }
 
-  // 4. 查询回复列表（type='3'）
+  // 4. 查询回复列表（type='3', detail_type=1 表示帖子评论）
   let comments = []
   try {
     const commentsRes = await db.collection('topics')
-      .where({ postId: PostId, type: '3' })
+      .where({ detail_type: 1, postId: PostId, type: '3' })
       .orderBy('createdAt', 'asc')
       .limit(100)
       .get()
@@ -298,41 +298,40 @@ async function publishPost(event) {
   }
 }
 
-// ========== 6. 提交回复（前端 #8，评论复用） ==========
+// ========== 6. 提交回复（评论+回复，支持 detail_type） ==========
 async function submitReply(event) {
   const db = event.db
   const OPENID = event.OPENID
-  const { ParentId, content, replyToUserName } = event.data || {}
+  const { ParentId, content, detailType } = event.data || {}
+  // detailType: 1=帖子评论, 2=商品评论, 3=悬赏评论
 
   validateSubmitReply(event.data)
 
-  if (!OPENID) {
-    throw new Error('无法获取当前用户身份，请重新登录')
-  }
+  if (!OPENID) throw new Error('无法获取当前用户身份，请重新登录')
 
-  // 验证父级（帖子或回复）是否存在
+  const dt = detailType || 1  // 默认帖子评论
+
+  // 验证父级是否存在
   const parentRes = await db.collection('topics').doc(ParentId).get()
   const parent = parentRes.data
   if (!parent) throw new Error('目标不存在')
 
-  // 确定 postId（如果是回复帖子，ParentId 就是帖子ID；如果是回复楼中楼，需要追溯到帖子ID）
   let postId = ParentId
   let parentReplyId = null
   if (parent.type === '3') {
-    // 如果父级是回复，则 postId 取父级的 postId
     postId = parent.postId || ParentId
     parentReplyId = ParentId
-  } else if (parent.type === '2') {
-    // 如果父级是帖子，postId 就是 ParentId
+  } else if (parent.type === '2' || dt > 1) {
+    // 帖子一级回复 或 商品/悬赏的评论
     postId = ParentId
   } else {
-    throw new Error('只能对帖子或回复进行评论')
+    throw new Error('只能对帖子、回复、商品或悬赏进行评论')
   }
 
-  // 写入数据库
   const result = await db.collection('topics').add({
     data: {
-      type: '3', // 回复/评论
+      type: '3',
+      detail_type: dt,
       content: content.trim(),
       images: [],
       postId: postId,
@@ -346,15 +345,7 @@ async function submitReply(event) {
     }
   })
 
-  // 更新帖子的 replyCount
-  // await db.collection('topics').doc(postId).update({
-  //   data: { replyCount: _.inc(1) }
-  // })
-
-  return {
-    replyId: result._id,
-    message: '回复成功'
-  }
+  return { replyId: result._id, message: '回复成功' }
 }
 
 // ========== 7. 创建话题 ==========

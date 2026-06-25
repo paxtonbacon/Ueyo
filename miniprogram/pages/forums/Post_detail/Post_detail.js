@@ -21,7 +21,8 @@ Page({
       commentCount: 0
     },
     isPostLiked: false,
-    isCollected: false
+    isCollected: false,
+    comments: []       // 评论区数据
   },
 
   onLoad(options) {
@@ -87,6 +88,7 @@ Page({
       };
       this.setData({
         postInfo,
+        comments: data.comments || [],
         isPostLiked: data.is_liked || false,
         isCollected: data.is_favorited || false
       });
@@ -160,6 +162,10 @@ Page({
   onCommentLike(e) {
     const { commentId, isLiked } = e.detail;
     console.log('评论点赞:', commentId, isLiked);
-    // 实际调用接口更新
+  },
+
+  // 刷新帖子（评论后重新加载）
+  onRefreshPost() {
+    if (this.data.postId) this.loadPostData(this.data.postId);
   }
 });

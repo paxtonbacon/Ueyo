@@ -87,6 +87,15 @@
   background-color: #e0e0e0;
 }
 
+.btn-manage {
+  background-color: #07c160;
+  color: #fff;
+}
+
+.btn-manage:active {
+  background-color: #06ad56;
+}
+
 .empty-state {
   text-align: center;
   padding: 120rpx 0;

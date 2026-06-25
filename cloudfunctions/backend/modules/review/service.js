@@ -1,98 +1,137 @@
 // modules/review/service.js
-const { validateOrderId, validateSubmitReview } = require('./validator')
+const { validateSubmitReview } = require('./validator')
+const { SELLER_STATUS, BUYER_STATUS, PUT_STATUS, GET_STATUS } = require('../../constants/enums')
 
-// ========== 1. 提交评价 ==========
+// ========== 1. 提交评价（支持 goods + bounty） ==========
 async function submitReview(event) {
   const db = event.db
   const OPENID = event.OPENID
-  const { orderId, rating, content, images, isAnonymous } = event.data || {}
+  const { goodsId, ratingType, content, images, isAnonymous, direction, reviewType } = event.data || {}
+  // reviewType: 'goods' | 'bounty'
+  // direction: 'buyer_to_seller' | 'seller_to_buyer'
 
   if (!OPENID) throw new Error('无法获取当前用户身份')
+  if (!goodsId) throw new Error('ID不能为空')
 
-  validateSubmitReview(event.data)
+  const type = reviewType || 'goods'
 
-  // 1. 查询订单，验证状态和权限
-  const orderRes = await db.collection('orders').doc(orderId).get()
-  const order = orderRes.data
-  if (!order) throw new Error('订单不存在')
-  if (order.orderStatus !== '4') {
-    throw new Error('只有已完成订单才能评价')
+  if (type === 'bounty') {
+    return await submitBountyReview(db, OPENID, event.data)
   }
-
-  // 检查当前用户是否为买家或卖家
-  const isBuyer = order.buyerInfo && order.buyerInfo._id === OPENID
-  const isSeller = order.sellerInfo && order.sellerInfo._id === OPENID
-  if (!isBuyer && !isSeller) {
-    throw new Error('您不是该订单的参与方，无权评价')
-  }
-
-  // 2. 确定评价对象（被评价方）
-  let revieweeId
-  if (isBuyer) {
-    // 买家评价卖家
-    revieweeId = order.sellerInfo?._id
-  } else {
-    // 卖家评价买家
-    revieweeId = order.buyerInfo?._id
-  }
-  if (!revieweeId) throw new Error('被评价方不存在')
-
-  // 3. 检查是否已经评价过（防止重复评价）
-  const existingRes = await db.collection('reviews')
-    .where({
-      orderId: orderId,
-      reviewerInfo: { _id: OPENID }
-    })
-    .count()
-  if (existingRes.total > 0) {
-    throw new Error('您已评价过该订单')
-  }
-
-  // 4. 写入评价
-  const result = await db.collection('reviews').add({
-    data: {
-      rating,
-      content: content || '',
-      images: images || [],
-      isAnonymous: isAnonymous || false,
-      reviewerInfo: { _id: OPENID },
-      revieweeInfo: { _id: revieweeId },
-      orderId: orderId,
-      createdAt: Date.now()
-    }
-  })
-
-  // 5. 更新被评价方的信用分（简化版）
-  await updateCreditScore(db, revieweeId, rating)
-
-  return {
-    reviewId: result._id,
-    message: '评价成功'
-  }
+  return await submitGoodsReview(db, OPENID, event.data)
 }
 
-// ========== 辅助函数：更新信用分 ==========
-async function updateCreditScore(db, userId, rating) {
-  // 计算变动：5星+2分，4星+1分，3星0，2星-1，1星-2
-  const delta = rating - 3
-  const scoreDelta = delta // 直接使用差值作为分数变动
+// ========== 商品评价 ==========
+async function submitGoodsReview(db, OPENID, data) {
+  const { goodsId, ratingType, content, images, isAnonymous, direction } = data
 
-  // 查询用户当前信用分
+  const goodsRes = await db.collection('goods').doc(goodsId).get()
+  const goods = goodsRes.data
+  if (!goods) throw new Error('商品不存在')
+
+  let dir = direction || 'buyer_to_seller'
+  let revieweeId
+
+  if (dir === 'buyer_to_seller') {
+    revieweeId = goods.sellerInfo?._id
+  } else {
+    const orderRes = await db.collection('orders').where({ 'goodsInfo._id': goodsId }).get()
+    if (orderRes.data.length > 0) revieweeId = orderRes.data[0].buyerInfo?._id
+    if (!revieweeId) throw new Error('找不到买家信息')
+  }
+
+  if (!revieweeId) throw new Error('被评价方不存在')
+  if (OPENID === revieweeId) throw new Error('不能评价自己')
+
+  // 防重复
+  const existRes = await db.collection('reviews').where({ goodsId, 'reviewerInfo._id': OPENID }).count()
+  if (existRes.total > 0) throw new Error('您已评价过该商品')
+
+  const result = await db.collection('reviews').add({
+    data: { goodsId, direction: dir, ratingType: ratingType || 'good', content: content || '', images: images || [], isAnonymous: isAnonymous || false, reviewerInfo: { _id: OPENID }, revieweeInfo: { _id: revieweeId }, reviewType: 'goods', createdAt: Date.now() }
+  })
+
+  const scoreResult = await updateCreditScore(db, revieweeId, ratingType)
+
+  // 更新商品状态
+  if (dir === 'seller_to_buyer') {
+    await db.collection('goods').doc(goodsId).update({ data: { seller_status: SELLER_STATUS.ALL_DOWN } })
+  } else {
+    await db.collection('goods').doc(goodsId).update({ data: { buyer_status: BUYER_STATUS.HAVE_DOWN } })
+  }
+
+  return { reviewId: result._id, message: '评价成功', newCreditScore: scoreResult.score, newCreditLevel: scoreResult.level }
+}
+
+// ========== 悬赏评价 ==========
+async function submitBountyReview(db, OPENID, data) {
+  const { goodsId: bountyId, ratingType, content, images, isAnonymous, direction } = data
+
+  const bountyRes = await db.collection('bounties').doc(bountyId).get()
+  const bounty = bountyRes.data
+  if (!bounty) throw new Error('悬赏不存在')
+
+  let dir = direction || 'buyer_to_seller'  // buyer_to_seller = 接取方评发布方
+  let revieweeId
+
+  if (dir === 'buyer_to_seller') {
+    // 接取方评发布方 → 被评方是发布者
+    revieweeId = bounty.buyerInfo?._id
+  } else {
+    // 发布方评接取方 → 被评方是接取者
+    revieweeId = bounty.takerInfo?._id
+  }
+
+  if (!revieweeId) throw new Error('被评价方不存在')
+  if (OPENID === revieweeId) throw new Error('不能评价自己')
+
+  // 防重复
+  const existRes = await db.collection('bounties_review').where({ bountyId, 'reviewerInfo._id': OPENID }).count()
+  if (existRes.total > 0) throw new Error('您已评价过该悬赏')
+
+  const result = await db.collection('bounties_review').add({
+    data: { bountyId, direction: dir, ratingType: ratingType || 'good', content: content || '', images: images || [], isAnonymous: isAnonymous || false, reviewerInfo: { _id: OPENID }, revieweeInfo: { _id: revieweeId }, reviewType: 'bounty', createdAt: Date.now() }
+  })
+
+  const scoreResult = await updateCreditScore(db, revieweeId, ratingType)
+
+  // 更新悬赏状态
+  if (dir === 'seller_to_buyer') {
+    // 发布方评价 → put_status 变 3all_down
+    await db.collection('bounties').doc(bountyId).update({ data: { put_status: PUT_STATUS.ALL_DOWN } })
+  } else {
+    // 接取方评价 → get_status 变 3have_down
+    await db.collection('bounties').doc(bountyId).update({ data: { get_status: GET_STATUS.HAVE_DOWN } })
+  }
+
+  return { reviewId: result._id, message: '评价成功', newCreditScore: scoreResult.score, newCreditLevel: scoreResult.level }
+}
+
+// ========== 辅助：更新信用分 + 等级 ==========
+async function updateCreditScore(db, userId, ratingType) {
   const userRes = await db.collection('users').doc(userId).get()
   const user = userRes.data
-  if (!user) return
+  if (!user) return { score: 100, level: '1' }
+
+  // 评分权重：好评+2，中评0，差评-3
+  const deltaMap = { 'good': 2, 'neutral': 0, 'bad': -3 }
+  const delta = deltaMap[ratingType] || 0
 
   const currentScore = user.creditScore || 100
-  let newScore = Math.min(100, Math.max(0, currentScore + scoreDelta))
-  // 如果新分数超出0-100范围则截断
+  let newScore = Math.min(100, Math.max(0, currentScore + delta))
 
-  // 更新信用分
+  // 信用等级（4级，均分100分）
+  let level = '1'
+  if (newScore >= 80) level = '1'       // 优秀
+  else if (newScore >= 60) level = '2'  // 良好
+  else if (newScore >= 40) level = '3'  // 一般
+  else level = '4'                       // 较差
+
   await db.collection('users').doc(userId).update({
-    data: {
-      creditScore: newScore,
-      // 如果需要更新信用等级，可在此扩展
-    }
+    data: { creditScore: newScore, creditLevel: level }
   })
+
+  return { score: newScore, level }
 }
 
 // ========== 2. 查询评价列表（按被评价用户） ==========

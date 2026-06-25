@@ -7,7 +7,7 @@
       <text class="card-title">{{item.title}}</text>
       <view class="price-row">
         <text class="price">¥{{item.price}}</text>
-        <text class="condition">{{item.condition}}成新</text>
+        <text class="condition">{{item.condition}}</text>
       </view>
       <view class="seller-row" catchtap="onSellerTap" data-seller-id="{{item.sellerId}}">
         <image class="avatar" src="{{item.sellerAvatar}}" mode="aspectFill"></image>

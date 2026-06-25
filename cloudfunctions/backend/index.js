@@ -29,8 +29,7 @@ const routeMap = {
   'bounty/list': bountyController.getBountyList,
   'bounty/detail': bountyController.getBountyDetail,
   'bounty/publish': bountyController.publishBounty,
-  'bounty/take': bountyController.takeBounty,
-  // ===== 社区模块路由 =====
+  'bounty/take': bountyController.takeBounty,   'bounty/updateStatus': bountyController.updateBountyStatus,  // ===== 社区模块路由 =====
   'social/topic/list': socialController.getTopicList,
   'social/post/list': socialController.getPostList,
   'social/topic/posts': socialController.getTopicPosts,
@@ -46,6 +45,8 @@ const routeMap = {
    'user/updateProfile': userController.updateProfile,
    'user/favorites': userController.getFavorites,
    'user/toggleFavorite': userController.toggleFavorite,
+   'user/myGoods': userController.myGoods,
+   'user/myBounties': userController.myBounties,
    'user/emailRegister': userController.emailRegister,
    'user/verifyEmail': userController.verifyEmail,
    'user/emailLogin': userController.emailLogin,
@@ -60,6 +61,7 @@ const routeMap = {
    'bounty_order/list': bountyOrderController.getBountyOrderList,
    'bounty_order/confirm': bountyOrderController.confirmBountyOrder,
    'goods/generateDesc': goodsController.generateDescription,
+   'goods/updateStatus': goodsController.updateGoodsStatus,
    // ===== 消息模块 =====
    'message/conversations': messageController.getConversations,
    'message/list': messageController.getMessages,

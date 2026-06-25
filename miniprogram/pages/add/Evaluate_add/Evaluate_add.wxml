@@ -1,0 +1,35 @@
+<!--pages/add/Evaluate_add/Evaluate_add.wxml-->
+<navigation-bar title="评价" back="{{true}}" color="black" background="#FFF"></navigation-bar>
+<scroll-view class="page" scroll-y enhanced show-scrollbar="{{false}}">
+  <!-- 评级选择 -->
+  <view class="section">
+    <text class="section-title">评价等级</text>
+    <view class="rating-row">
+      <view class="rating-btn {{ratingType==='good'?'active good':''}}" data-type="good" bindtap="onRatingTap">👍 好评</view>
+      <view class="rating-btn {{ratingType==='neutral'?'active neutral':''}}" data-type="neutral" bindtap="onRatingTap">😐 中评</view>
+      <view class="rating-btn {{ratingType==='bad'?'active bad':''}}" data-type="bad" bindtap="onRatingTap">👎 差评</view>
+    </view>
+  </view>
+
+  <!-- 评价内容 -->
+  <view class="section">
+    <text class="section-title">评价内容</text>
+    <textarea class="content-input" placeholder="描述一下您的交易体验..." maxlength="500" bindinput="onContentInput" value="{{content}}"></textarea>
+    <text class="char-count">{{content.length}}/500</text>
+  </view>
+
+  <!-- 图片 -->
+  <view class="section">
+    <text class="section-title">图片（选填）</text>
+    <view class="image-row">
+      <view class="image-item" wx:for="{{imageList}}" wx:key="index">
+        <image class="img" src="{{item}}" mode="aspectFill"></image>
+        <view class="del-btn" bindtap="deleteImage" data-index="{{index}}">×</view>
+      </view>
+      <view class="image-add" bindtap="chooseImage" wx:if="{{imageList.length<9}}">+</view>
+    </view>
+  </view>
+
+  <!-- 提交 -->
+  <button type="primary" bindtap="onSubmit" loading="{{isLoading}}" disabled="{{isLoading}}">提交评价</button>
+</scroll-view>

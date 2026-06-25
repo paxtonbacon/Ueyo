@@ -22,3 +22,8 @@ exports.takeBounty = catchAsync(async (event) => {
   const data = await bountyService.takeBounty(event)
   return SUCCESS(data)
 })
+
+exports.updateBountyStatus = catchAsync(async (event) => {
+  const data = await bountyService.updateBountyStatus(event)
+  return SUCCESS(data)
+})

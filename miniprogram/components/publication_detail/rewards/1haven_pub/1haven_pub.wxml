@@ -10,6 +10,7 @@
       </view>
       <view class="card-footer">
         <view class="btn btn-cancel" bindtap="onCancel" data-id="{{item.id}}">取消</view>
+        <view class="btn btn-manage" bindtap="onManage" data-id="{{item.id}}">管理</view>
       </view>
     </view>
   </view>

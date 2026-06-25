@@ -31,36 +31,40 @@ Page({
     this.loadOrders();
   },
 
-  // 加载订单
+  // 加载订单（user/myGoods 购买 + user/myBounties 接取）
   async loadOrders() {
     try {
+      // 购买的商品
       const goodsRes = await wx.cloud.callFunction({
         name: 'backend',
-        data: { action: 'order/list', data: { role: 'buyer', page: 1, pageSize: 50 } }
+        data: { action: 'user/myGoods', data: {} }
       });
-      const orders = (goodsRes.result.code === 0 ? goodsRes.result.data.orders : []) || [];
-      const fmt = this.formatOrder;
-      this.setData({
-        goods_waitPay: orders.filter(o => o.orderStatus === '1').map(fmt),
-        goods_paid: orders.filter(o => o.orderStatus === '2').map(fmt),
-        goods_evaluate: orders.filter(o => o.orderStatus === '3').map(fmt),
-        goods_complete: orders.filter(o => o.orderStatus === '4' || o.orderStatus === '6').map(fmt)
+      if (goodsRes.result.code === 0) {
+        const b = goodsRes.result.data.bought || {};
+        this.setData({
+          goods_waitPay: b['1waited_for_pay'] || [],
+          goods_paid: b['2waited_for_get'] || [],
+          goods_evaluate: b['3waited_for_dis'] || [],
+          goods_complete: b['4have_down'] || []
+        });
+      }
+
+      // 接取的悬赏
+      const bountyRes = await wx.cloud.callFunction({
+        name: 'backend',
+        data: { action: 'user/myBounties', data: {} }
       });
+      if (bountyRes.result.code === 0) {
+        const t = bountyRes.result.data.taken || {};
+        this.setData({
+          rewards_active: t['1waited_for_do'] || [],
+          rewards_evaluate: t['2waited_for_dis'] || [],
+          rewards_complete: t['3have_down'] || []
+        });
+      }
     } catch (err) {
       console.error('加载订单失败:', err);
     }
-  },
-
-  // 订单数据映射
-  formatOrder(o) {
-    return {
-      id: o.orderId,
-      title: o.goodsTitle || '',
-      amount: o.amount || 0,
-      orderNo: o.orderNo || '',
-      image: o.firstPictureCDN || '',
-      finalStatus: o.orderStatus === '6' ? '已取消' : (o.orderStatus === '4' ? '已完成' : '')
-    };
   },
 
   onOuterTabChange(e) {

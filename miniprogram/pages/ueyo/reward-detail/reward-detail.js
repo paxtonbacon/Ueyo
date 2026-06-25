@@ -8,6 +8,8 @@ Page({
     isFavorited: false,
     safeAreaBottom: 0,
     rightCapsuleSafePadding: '100px',
+    comments: [],   // 顶层，传给 comment-section
+    postId: '',
     rewardInfo: {
       images: [],
       minPrice: '',
@@ -91,6 +93,7 @@ Page({
       };
       this.setData({
         rewardInfo,
+        comments: data.comments || [],
         isFavorited: data.is_favorite || false
       });
     } catch (err) {
@@ -181,5 +184,9 @@ Page({
         }
       }
     });
+  },
+
+  onRefreshReward() {
+    if (this.data.rewardInfo.id) this.loadRewardData(this.data.rewardInfo.id);
   }
 });
