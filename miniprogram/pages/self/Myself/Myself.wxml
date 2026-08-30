@@ -105,15 +105,3 @@
     <text class="legend-label">多</text>
   </view>
 </view>
-
-<!-- 模块3：数据汇总 -->
-<view class="stats-summary">
-  <view class="summary-item" wx:for="{{summaryData}}" wx:key="index">
-    <view class="summary-icon-wrap">
-      <text class="summary-icon">{{item.icon}}</text>
-    </view>
-    <text class="summary-value">{{item.value}}</text>
-    <text class="summary-label">{{item.label}}</text>
-  </view>
-</view>
-

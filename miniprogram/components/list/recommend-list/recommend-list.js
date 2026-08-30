@@ -100,18 +100,16 @@ Component({
     },
 
     onSellerTap(e) {
-      const sellerId = e.currentTarget.dataset.sellerId;
+      const { sellerId, name, avatar } = e.currentTarget.dataset;
       wx.navigateTo({
-        url: `/pages/seller/seller?sellerId=${sellerId}`,
-        fail: () => wx.showToast({ title: '卖家主页开发中', icon: 'none' })
+        url: `/pages/message/Message_detail/Message_detail?userId=${sellerId}&nickname=${encodeURIComponent(name || '')}&avatar=${encodeURIComponent(avatar || '')}`
       });
     },
 
     onBuyerTap(e) {
-      const buyerId = e.currentTarget.dataset.buyerId;
+      const { buyerId, name, avatar } = e.currentTarget.dataset;
       wx.navigateTo({
-        url: `/pages/user/user?userId=${buyerId}`,
-        fail: () => wx.showToast({ title: '用户主页开发中', icon: 'none' })
+        url: `/pages/message/Message_detail/Message_detail?userId=${buyerId}&nickname=${encodeURIComponent(name || '')}&avatar=${encodeURIComponent(avatar || '')}`
       });
     },
 

@@ -10,7 +10,16 @@ Component({
     totalCount: 0,
     showInput: false,
     replyTarget: null,
-    commentText: ''
+    commentText: '',
+    currentUserAvatar: '/images/default_avatar.png'
+  },
+  lifetimes: {
+    attached() {
+      // 获取当前用户头像
+      const app = getApp();
+      const avatar = (app && app.globalData && app.globalData.avatarUrl) || '/images/default_avatar.png';
+      this.setData({ currentUserAvatar: avatar });
+    }
   },
   observers: {
     'externalComments'(newVal) {
@@ -55,6 +64,11 @@ Component({
       this.setData({ showInput: true, replyTarget: target, commentText: '' });
     },
     hideInput() { this.setData({ showInput: false, replyTarget: null }); },
+
+    // 点击快捷输入框 → 发送一级评论
+    onQuickInputTap() {
+      this.showCommentInput(null);  // null = 一级评论（非回复）
+    },
 
     onReplyMain(e) {
       const { id, name, parentId } = e.currentTarget.dataset;

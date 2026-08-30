@@ -9,7 +9,7 @@
         <text class="price">¥{{item.price}}</text>
         <text class="condition">{{item.condition}}</text>
       </view>
-      <view class="seller-row" catchtap="onSellerTap" data-seller-id="{{item.sellerId}}">
+      <view class="seller-row" catchtap="onSellerTap" data-seller-id="{{item.sellerId}}" data-name="{{item.sellerName}}" data-avatar="{{item.sellerAvatar}}">
         <image class="avatar" src="{{item.sellerAvatar}}" mode="aspectFill"></image>
         <text class="name">{{item.sellerName}}</text>
       </view>
@@ -21,7 +21,7 @@
       <text class="reward-title">{{item.title}}</text>
       <!-- <text class="reward-desc">{{item.desc}}</text> -->
       <text class="reward-price">¥{{item.minPrice}}~{{item.maxPrice}}</text>
-      <view class="buyer-row" catchtap="onBuyerTap" data-buyer-id="{{item.buyerId}}">
+      <view class="buyer-row" catchtap="onBuyerTap" data-buyer-id="{{item.buyerId}}" data-name="{{item.buyerName}}" data-avatar="{{item.buyerAvatar}}">
         <image class="avatar" src="{{item.buyerAvatar}}" mode="aspectFill"></image>
         <text class="name">{{item.buyerName}}</text>
       </view>

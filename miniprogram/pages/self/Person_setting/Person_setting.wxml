@@ -1,4 +1,5 @@
 <!--pages/self/Person_setting/Person_setting.wxml-->
+<wxs module="dateUtil" src="/utils/date.wxs"></wxs>
 <view class="page">
   <!-- 自定义导航栏：左上角退出按钮 -->
   <view class="navbar">
@@ -37,7 +38,7 @@
       <view class="info-item">
         <text class="info-label">注册时间</text>
         <view class="info-right">
-          <text class="info-value">{{registerTime}}</text>
+          <text class="info-value">{{dateUtil.formatDate(registerTime)}}</text>
         </view>
       </view>
     </view>

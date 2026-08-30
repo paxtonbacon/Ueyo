@@ -1,10 +1,14 @@
 // components/recommend-list/recommend-list.js
 Component({
   properties: {
-    // 可接收外部传入的筛选条件，如 type: 'goods' / 'reward'
     type: {
       type: String,
       value: 'goods'
+    },
+    // 话题ID：传入时按 relatedTopics 筛选该话题下的商品
+    topicId: {
+      type: String,
+      value: ''
     }
   },
   data: {
@@ -57,11 +61,16 @@ Component({
 
     // 调用云函数获取商品列表
     fetchDataFromCloud(page, pageSize) {
+      const params = { page, pageSize };
+      // 如果传入了 topicId，按 relatedTopics 筛选
+      if (this.properties.topicId) {
+        params.relatedTopics = this.properties.topicId;
+      }
       return wx.cloud.callFunction({
         name: 'backend',
         data: {
           action: 'goods/list',
-          data: { page, pageSize }
+          data: params
         }
       }).then(res => {
         const result = res.result;
@@ -87,14 +96,11 @@ Component({
       });
     },
 
-    // 点击卖家区域，跳转卖家主页
+    // 点击卖家 → 跳转聊天页
     onSellerTap(e) {
-      const sellerId = e.currentTarget.dataset.sellerId;
+      const { sellerId, name, avatar } = e.currentTarget.dataset;
       wx.navigateTo({
-        url: `/pages/seller/seller?sellerId=${sellerId}`,
-        fail: () => {
-          wx.showToast({ title: '卖家主页开发中', icon: 'none' });
-        }
+        url: `/pages/message/Message_detail/Message_detail?userId=${sellerId}&nickname=${encodeURIComponent(name || '')}&avatar=${encodeURIComponent(avatar || '')}`
       });
     },
     

@@ -3,6 +3,7 @@
 Page({
   data: {
     // 基本信息
+    avatarUrl: '',
     nickname: '',
     gender: '',
     genderText: '',
@@ -53,6 +54,7 @@ Page({
       if (result.code === 0 && result.data) {
         const user = result.data;
         this.setData({
+          avatarUrl: user.avatarUrl || '',
           nickname: user.nickName || '',
           gender: user.gender || '',
           genderText: this.formatGenderText(user.gender),
@@ -68,6 +70,7 @@ Page({
       const userInfo = wx.getStorageSync('userInfo');
       if (userInfo) {
         this.setData({
+          avatarUrl: userInfo.avatarUrl || '',
           nickname: userInfo.nickname || '',
           gender: userInfo.gender || '',
           genderText: this.formatGenderText(userInfo.gender),
@@ -83,6 +86,7 @@ Page({
   // 获取当前数据快照
   getCurrentDataSnapshot() {
     return {
+      avatarUrl: this.data.avatarUrl,
       nickname: this.data.nickname,
       gender: this.data.gender,
       meetingPoint: this.data.meetingPoint,
@@ -96,6 +100,7 @@ Page({
     const cur = this.data;
     const orig = this.data.originalData;
     return (
+      cur.avatarUrl !== orig.avatarUrl ||
       cur.nickname !== orig.nickname ||
       cur.gender !== orig.gender ||
       cur.meetingPoint !== orig.meetingPoint ||
@@ -112,6 +117,7 @@ Page({
         data: {
           action: 'user/updateProfile',
           data: {
+            avatarUrl: this.data.avatarUrl,
             nickName: this.data.nickname,
             gender: this.data.gender,
             dormArea: this.data.meetingPoint
@@ -120,8 +126,15 @@ Page({
       });
       const result = res.result;
       if (result.code === 0) {
+        // 同步更新 globalData（Myself 页面 onShow 从此读取）
+        const app = getApp();
+        if (app && app.globalData) {
+          app.globalData.nickName = this.data.nickname;
+          app.globalData.avatarUrl = this.data.avatarUrl;
+        }
         // 同时更新本地缓存
         const userInfo = {
+          avatarUrl: this.data.avatarUrl,
           nickname: this.data.nickname,
           gender: this.data.gender,
           genderText: this.data.genderText,
@@ -139,8 +152,14 @@ Page({
       }
     } catch (err) {
       console.error('保存用户信息失败:', err);
-      // 降级到本地缓存
+      // 降级：同步 globalData + 本地缓存
+      const app = getApp();
+      if (app && app.globalData) {
+        app.globalData.nickName = this.data.nickname;
+        app.globalData.avatarUrl = this.data.avatarUrl;
+      }
       const userInfo = {
+        avatarUrl: this.data.avatarUrl,
         nickname: this.data.nickname,
         gender: this.data.gender,
         genderText: this.data.genderText,
@@ -160,6 +179,7 @@ Page({
   restoreOriginalData() {
     const orig = this.data.originalData;
     this.setData({
+      avatarUrl: orig.avatarUrl,
       nickname: orig.nickname,
       gender: orig.gender,
       genderText: this.formatGenderText(orig.gender),
@@ -204,6 +224,31 @@ Page({
   },
 
   // ========== 编辑功能 ==========
+  editAvatar() {
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      success: async (res) => {
+        wx.showLoading({ title: '上传中...' });
+        const tempFile = res.tempFiles[0];
+        try {
+          const cloudPath = `avatars/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+          const uploadRes = await wx.cloud.uploadFile({
+            cloudPath,
+            filePath: tempFile.tempFilePath
+          });
+          this.setData({ avatarUrl: uploadRes.fileID });
+          wx.hideLoading();
+          wx.showToast({ title: '头像已更新', icon: 'success' });
+        } catch (e) {
+          wx.hideLoading();
+          wx.showToast({ title: '上传失败', icon: 'none' });
+        }
+      }
+    });
+  },
+
   editNickname() {
     wx.showModal({
       title: '编辑昵称',
@@ -275,6 +320,16 @@ Page({
     this.setData({ recSwitch: e.detail.value });
   },
 
+  // ========== 提交修改并返回我的页面 ==========
+  onSubmitChanges() {
+    this.saveChanges(() => {
+      // 跳转到 Myself 页面（tabBar 页面），触发刷新
+      wx.switchTab({
+        url: '/pages/self/Myself/Myself'
+      });
+    });
+  },
+
   // ========== 退出登录 ==========
   onLogoutTap() {
     if (this.hasDataChanged()) {
@@ -299,10 +354,17 @@ Page({
   },
 
   doLogout() {
-    // 清除登录状态和用户信息
-    wx.setStorageSync('isLogin', false);
-    wx.setStorageSync('userInfo', null);
-    
+    // 清除 globalData 内存（token/userId/openId/email等）
+    const app = getApp();
+    if (app && app.clearAuth) {
+      app.clearAuth();
+    }
+
+    // 清除本地持久化数据
+    wx.removeStorageSync('jwt_token');
+    wx.removeStorageSync('user_info');
+    wx.removeStorageSync('isLogin');
+
     wx.showToast({
       title: '已退出登录',
       icon: 'success',

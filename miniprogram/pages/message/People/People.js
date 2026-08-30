@@ -9,6 +9,11 @@ Page({
     this.loadChatList()
   },
 
+  onShow() {
+    // 从聊天页返回时刷新列表
+    this.loadChatList()
+  },
+
   // 从云函数加载聊天列表
   async loadChatList() {
     try {
@@ -37,10 +42,6 @@ Page({
     const target = this.data.chatList.find(item => item.id === id)
     if (!target) return
 
-    wx.showToast({
-      title: '点击成功'
-    })
-    // 跳转到聊天页面，传递必要参数（对方id、昵称、头像等）
     wx.navigateTo({
       url: `/pages/message/Message_detail/Message_detail?userId=${target.id}&nickname=${encodeURIComponent(target.nickname)}&avatar=${encodeURIComponent(target.avatar)}`
     })

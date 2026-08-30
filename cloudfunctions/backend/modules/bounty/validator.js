@@ -10,7 +10,7 @@ const validateBountyId = (bountyId) => {
 
 // 校验发布悬赏的必填字段
 const validatePublish = (data) => {
-  const { title, description, category, expectedPrice } = data
+  const { title, description, category, minPrice, maxPrice } = data
   if (!title || typeof title !== 'string' || title.trim().length === 0) {
     throw new Error('悬赏标题不能为空')
   }
@@ -23,8 +23,14 @@ const validatePublish = (data) => {
   if (!category) {
     throw new Error('分类不能为空')
   }
-  if (expectedPrice === undefined || expectedPrice === null || typeof expectedPrice !== 'number' || expectedPrice < 0) {
-    throw new Error('期望价格必须为非负数字')
+  if (minPrice === undefined || minPrice === null || typeof minPrice !== 'number' || minPrice < 0) {
+    throw new Error('最低价格必须为非负数字')
+  }
+  if (maxPrice === undefined || maxPrice === null || typeof maxPrice !== 'number' || maxPrice < 0) {
+    throw new Error('最高价格必须为非负数字')
+  }
+  if (maxPrice < minPrice) {
+    throw new Error('最高价格不能低于最低价格')
   }
   return true
 }

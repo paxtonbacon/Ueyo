@@ -8,7 +8,7 @@ Page({
       nickname: '',
       avatar: ''
     },
-    myAvatar: 'https://randomuser.me/api/portraits/women/68.jpg', // 自己的头像
+    myAvatar: '',
     messageList: [],
     inputText: '',
     showPlusPanel: false,
@@ -16,11 +16,14 @@ Page({
   },
 
   onLoad(options) {
-    // 获取系统状态栏高度
     const systemInfo = wx.getSystemInfoSync()
     this.setData({ statusBarHeight: systemInfo.statusBarHeight })
 
-    // 接收从聊天列表页传递的参数
+    // 同步自己的头像
+    const app = getApp()
+    const myAvatar = (app && app.globalData && app.globalData.avatarUrl) || ''
+    this.setData({ myAvatar })
+
     const { userId, nickname, avatar } = options
     console.log('接收到的参数:', options)  // 调试用
     const decodedNickname = nickname ? decodeURIComponent(nickname) : '用户'

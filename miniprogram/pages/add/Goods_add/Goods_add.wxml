@@ -94,18 +94,14 @@ style="margin-top: {{navTotalHeight}}px;">
     </view>
     <view class="divider"></view>
 
-    <!-- 分类栏（带实时推荐） -->
-    <view class="info-row category-row">
-      <text class="info-label">分类</text>
-      <view class="category-wrap">
-        <input class="category-input" placeholder="#话题 如:宠物用品" placeholder-class="placeholder" bindinput="onCategoryInput" value="{{category}}" bindfocus="onCategoryFocus" bindblur="onCategoryBlur"/>
-        <view class="recommend-list" wx:if="{{showRecommend && recommendList.length > 0}}">
-          <view wx:for="{{recommendList}}" wx:key="index" class="recommend-item" bindtap="selectRecommend" data-category="{{item}}">
-            #{{item}}
-          </view>
-        </view>
+    <!-- 话题分类栏 -->
+    <picker class="info-picker" mode="selector" range="{{topicTitles}}" value="{{topicIndex}}" bindchange="onTopicChange">
+      <view class="info-row">
+        <text class="info-label">话题分类</text>
+        <text class="info-value">{{topicTitles[topicIndex] || '请选择'}}</text>
+        <text class="info-arrow">›</text>
       </view>
-    </view>
+    </picker>
   </view>
 
   <!-- 发布按钮（在卡片外部） -->

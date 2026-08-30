@@ -107,10 +107,9 @@ Page({
   },
 
   onAvatarTap() {
-    const buyerId = this.data.rewardInfo.buyerId;
+    const info = this.data.rewardInfo;
     wx.navigateTo({
-      url: `/pages/user/user?userId=${buyerId}`,
-      fail: () => wx.showToast({ title: '用户主页开发中', icon: 'none' })
+      url: `/pages/message/Message_detail/Message_detail?userId=${info.buyerId}&nickname=${encodeURIComponent(info.buyerName || '')}&avatar=${encodeURIComponent(info.buyerAvatar || '')}`
     });
   },
 
@@ -138,10 +137,29 @@ Page({
     }
   },
 
-  // 确认接单（调用云函数 bounty_order/create）
-  onAcceptOrder() {
+  // 确认接单（调用云函数 bounty_order/create，且不能接自己的）
+  async onAcceptOrder() {
     const app = getApp();
     const g = app && app.globalData;
+
+    // 通过云函数获取当前用户 openid，校验不能接自己的悬赏
+    try {
+      const pingRes = await wx.cloud.callFunction({ name: 'backend', data: { action: 'test/ping' } });
+      const myOpenId = (pingRes.result && pingRes.result.data && pingRes.result.data.openid) || '';
+      const buyerId = this.data.rewardInfo.buyerId;
+      if (myOpenId && buyerId && myOpenId === buyerId) {
+        wx.showModal({
+          title: '提示',
+          content: '不能接取自己发布的悬赏',
+          showCancel: false,
+          confirmText: '知道了'
+        });
+        return;
+      }
+    } catch (e) {
+      console.error('获取 openid 失败:', e);
+    }
+
     if (!g || !g.isLogin || g.authLevel < 2) {
       wx.showModal({
         title: '需要认证',

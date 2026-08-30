@@ -52,3 +52,8 @@ exports.myBounties = catchAsync(async (event) => {
   const data = await userService.myBounties(event)
   return SUCCESS(data)
 })
+
+exports.getActivity = catchAsync(async (event) => {
+  const data = await userService.getActivity(event)
+  return SUCCESS(data)
+})

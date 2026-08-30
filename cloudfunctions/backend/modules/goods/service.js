@@ -2,6 +2,7 @@
 const { generateDescription } = require('../../utils/aiClient')
 const { validateGoodsId } = require('./validator')
 const { SELLER_STATUS, BUYER_STATUS, CONDITION } = require('../../constants/enums')
+const { getUserByOpenId } = require('../../utils/helper')
 
 // ========== 枚举白名单 ==========
 const CONDITION_MAP = { '1': true, '2': true, '3': true, '4': true }
@@ -20,7 +21,7 @@ async function publishGoods(event) {
   const OPENID = event.OPENID
   const { 
     title, description, category, subCategory, price, originalPrice,
-    condition, tradeType, images, video, tags, attrs 
+    condition, tradeType, images, video, tags, attrs, relatedTopics
   } = event.data || {}
 
   // 校验（使用导入的 validatePublish）
@@ -50,6 +51,7 @@ async function publishGoods(event) {
       tags: tags || [],
       attrs: attrs || {},
       sellerInfo: { _id: OPENID },
+      relatedTopics: relatedTopics || '',
       likeCount: 0,
       createdAt: Date.now()
     }
@@ -83,8 +85,7 @@ async function getGoodsDetail(event) {
   let sellerInfo = {}
   if (goods.sellerInfo && goods.sellerInfo._id) {
     try {
-      const sellerRes = await db.collection('users').doc(goods.sellerInfo._id).get()
-      sellerInfo = sellerRes.data || {}
+      sellerInfo = await getUserByOpenId(db, goods.sellerInfo._id)
     } catch (e) { /* 忽略 */ }
   }
 
@@ -100,8 +101,7 @@ async function getGoodsDetail(event) {
       let authorInfo = {}
       if (c.authorInfo && c.authorInfo._id) {
         try {
-          const authorRes = await db.collection('users').doc(c.authorInfo._id).get()
-          authorInfo = authorRes.data || {}
+          authorInfo = await getUserByOpenId(db, c.authorInfo._id)
         } catch (e) { /* 忽略 */ }
       }
       comments.push({
@@ -168,12 +168,15 @@ async function getGoodsDetail(event) {
 // ========== 3. 商品列表 ==========
 async function getGoodsList(event) {
   const db = event.db
-  const { page = 1, pageSize = 10, category, keyword } = event.data || {}
+  const { page = 1, pageSize = 10, category, keyword, relatedTopics } = event.data || {}
 
   const where = { seller_status: SELLER_STATUS.HAVE_PUB }   // 仅展示在售商品
   if (category) where.category = category
   if (keyword) {
     where.title = db.RegExp({ regexp: keyword, options: 'i' })
+  }
+  if (relatedTopics) {
+    where.relatedTopics = relatedTopics
   }
 
   const res = await db.collection('goods')
@@ -184,18 +187,31 @@ async function getGoodsList(event) {
     .get()
 
   const list = res.data || []
-  return {
-    goods_num: list.length,
-    goods_list: list.map(g => ({
+
+  // 联查卖家信息（头像和昵称）
+  const formattedList = []
+  for (const g of list) {
+    let sellerInfo = {}
+    if (g.sellerInfo && g.sellerInfo._id) {
+      try {
+        sellerInfo = await getUserByOpenId(db, g.sellerInfo._id)
+      } catch (e) { /* 忽略 */ }
+    }
+    formattedList.push({
       id: g._id,
       title: g.title || '',
       price: (g.price || 0) / 100,
       condition: mapCondition(g.condition),
       sellerId: g.sellerInfo?._id || '',
-      sellerAvatarCDN: '',
-      sellerName: g.sellerInfo?.nickName || '',
+      sellerAvatarCDN: sellerInfo.avatarUrl || '',
+      sellerName: sellerInfo.nickName || '匿名用户',
       firstPictureCDN: g.images?.[0] || ''
-    }))
+    })
+  }
+
+  return {
+    goods_num: formattedList.length,
+    goods_list: formattedList
   }
 }
 

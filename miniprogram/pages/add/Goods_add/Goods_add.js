@@ -25,28 +25,24 @@ Page({
     title: '',
     description: '',
     imageList: [],
-    // 上传到云存储后的 fileID 列表（用于提交给后端）
     imageFileIDs: [],
     price: '',
-    tradeMethod: '',        // 交易方式（用户自由输入文本）
+    tradeMethod: '',
     quantity: '1',
-    category: '',           // 分类
-    subCategory: '',        // 二级分类
-    condition: '1',         // 新旧程度：1-全新，2-几乎全新，3-轻微痕迹，4-明显痕迹
-    showRecommend: false,   // 是否显示推荐下拉
-    recommendList: [],      // 推荐分类列表
-    // 预置 mock 分类库（用于实时推荐）
-    mockCategories: ['宠物用品', '宠物食品', '宠物活体', '宠物服务', '电子产品', '二手书籍', '服装鞋帽', '美妆护肤'],
+    condition: '1',
+    topicList: [],           // 话题列表 [{ id, title }]
+    topicTitles: [],         // 话题标题数组（picker用）
+    topicIndex: 0,           // 当前选中的话题索引
+    relatedTopicId: '',      // 选中话题的ID，"others"=其他
     statusBarHeight: 20,
     navTotalHeight: 64,
-
-    // AI 生成状态
     isGenerating: false,
     aiGenerated: false,
   },
 
   onLoad() {
     this.initNavBarHeight();
+    this.loadTopicList();
   },
 
   onShow() {
@@ -229,36 +225,36 @@ Page({
     this.setData({ quantity: val });
   },
 
-  // ========== 分类输入（实时推荐） ==========
-  onCategoryInput(e) {
-    const input = e.detail.value;
-    this.setData({ category: input });
-    if (input.trim()) {
-      const matched = this.data.mockCategories.filter(cat => cat.includes(input));
-      this.setData({ recommendList: matched, showRecommend: true });
-    } else {
-      this.setData({ showRecommend: false });
+  // ========== 加载话题列表 ==========
+  async loadTopicList() {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: { action: 'social/topic/list', data: { page: 1, pageSize: 50 } }
+      });
+      if (res.result && res.result.code === 0) {
+        const topics = res.result.data.topic_list || [];
+        const titles = topics.map(t => t.title);
+        titles.push('其他');  // 添加"其他"选项
+        this.setData({
+          topicList: topics,
+          topicTitles: titles
+        });
+      }
+    } catch (e) {
+      console.error('加载话题列表失败:', e);
     }
   },
 
-  onCategoryFocus() {
-    if (this.data.category.trim()) {
-      const matched = this.data.mockCategories.filter(cat => cat.includes(this.data.category));
-      this.setData({ recommendList: matched, showRecommend: true });
-    } else {
-      this.setData({ recommendList: this.data.mockCategories.slice(0, 5), showRecommend: true });
+  // ========== 话题选择 ==========
+  onTopicChange(e) {
+    const index = parseInt(e.detail.value);
+    const topicList = this.data.topicList;
+    let relatedTopicId = 'others';
+    if (index < topicList.length) {
+      relatedTopicId = topicList[index].id;
     }
-  },
-
-  onCategoryBlur() {
-    setTimeout(() => {
-      this.setData({ showRecommend: false });
-    }, 200);
-  },
-
-  selectRecommend(e) {
-    const selected = e.currentTarget.dataset.category;
-    this.setData({ category: selected, showRecommend: false });
+    this.setData({ topicIndex: index, relatedTopicId });
   },
 
   // ========== 发布商品（调用云函数） ==========
@@ -281,23 +277,23 @@ Page({
       wx.showToast({ title: '请填写有效价格', icon: 'none' });
       return;
     }
-    if (!this.data.category) {
-      wx.showToast({ title: '请选择分类', icon: 'none' });
+    if (!this.data.relatedTopicId) {
+      wx.showToast({ title: '请选择话题分类', icon: 'none' });
       return;
     }
 
-    // ----- 构造请求参数（与后端接口对齐） -----
     const requestData = {
       title: this.data.title.trim(),
       description: this.data.description.trim(),
-      category: this.data.category,
-      subCategory: this.data.subCategory || this.data.category, // 若无二级分类，复用一级
+      category: this.data.topicTitles[this.data.topicIndex] || '其他',
+      subCategory: this.data.topicTitles[this.data.topicIndex] || '其他',
       price: priceNum,
       condition: this.data.condition || '1',
-      tradeType: this.data.tradeMethod || '面交',  // 用户自由输入的交易方式文本
-      images: this.data.imageFileIDs,      // 云存储 fileID 数组
+      tradeType: this.data.tradeMethod || '面交',
+      images: this.data.imageFileIDs,
       tags: [],
-      attrs: {}
+      attrs: {},
+      relatedTopics: this.data.relatedTopicId
     };
 
     wx.showLoading({ title: '发布中...' });

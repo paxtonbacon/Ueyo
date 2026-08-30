@@ -19,7 +19,7 @@
 
     <!-- 商品 Tab 内容 -->
     <view slot="tab-content-1">
-      <goods-list id="goodsList" type="goods" />
+      <goods-list id="goodsList" type="goods" topicId="{{topicId}}" />
     </view>
   </tab-container>
 

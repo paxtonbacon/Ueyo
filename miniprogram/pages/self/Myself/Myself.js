@@ -48,8 +48,7 @@ Page({
           'userInfo.avatarUrl': g.avatarUrl || '',
           'userInfo.email': g.email || ''
         });
-        this.updateWeeklyData();
-        this.initHeatmapData();
+        this.loadActivityData();
       }
     } catch (e) {
       console.warn('syncFromGlobalData error:', e);
@@ -127,91 +126,32 @@ Page({
     }
   },
   
-  // 更新近7天数据
-  updateWeeklyData() {
-    const weekDays = [];
-    const weeklyData = [];
-    const today = new Date();
-    
-    for (let i = 6; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      const month = date.getMonth() + 1;
-      const day = date.getDate();
-      weekDays.push(`${month}/${day}`);
-      
-      const dayOfWeek = date.getDay();
-      let value;
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        value = Math.floor(Math.random() * 15) + 15;
-      } else {
-        value = Math.floor(Math.random() * 10) + 5;
-      }
-      weeklyData.push(value);
-    }
-    
-    this.setData({ weekDays, weeklyData });
-    
-    setTimeout(() => {
-      this.drawTrendChart();
-    }, 200);
-  },
-  
-  // 初始化热力图数据（7行 × 8列）
-  // 初始化热力图数据（7行 × 13列）
-initHeatmapData() {
-  const rows = 7;
-  const cols = 13;  // 13周 ≈ 3个月
-  
-  const heatmapData = [];
-  
-  // 生成模拟数据
-  for (let i = 0; i < rows; i++) {
-    const row = [];
-    for (let j = 0; j < cols; j++) {
-      const count = Math.floor(Math.random() * 20);
-      let level = 0;
-      if (count === 0) level = 0;
-      else if (count <= 3) level = 1;
-      else if (count <= 7) level = 2;
-      else if (count <= 12) level = 3;
-      else level = 4;
-      
-      row.push({
-        date: `2026-${Math.floor(j / 4.3) + 4}-${j % 30 + 1}`,
-        count: count,
-        level: level
+  // ========== 加载真实活跃数据 ==========
+  async loadActivityData() {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: { action: 'user/activity', data: {} }
       });
+      if (res.result && res.result.code === 0) {
+        const d = res.result.data;
+        this.setData({
+          heatmapData: d.heatmapData,
+          monthColumns: d.monthColumns,
+          weekDays: d.weekDays,
+          weeklyData: d.weeklyData,
+          weeklyTrend: d.weeklyTrend,
+          summaryData: d.summaryData,
+          insightText: d.insightText
+        });
+        // 延迟绘制折线图，等 canvas 渲染完成
+        setTimeout(() => { this.drawTrendChart(); }, 300);
+      }
+    } catch (e) {
+      console.error('加载活跃数据失败:', e);
     }
-    heatmapData.push(row);
-  }
-  
-  // 生成月份列标签（只在变化时显示）
-  const monthColumns = [];
-  let lastMonth = null;
-  
-  for (let j = 0; j < cols; j++) {
-    let monthName = '';
-    if (j < 4) monthName = '4月';
-    else if (j < 9) monthName = '5月';
-    else monthName = '6月';
-    
-    const show = (monthName !== lastMonth);
-    monthColumns.push({
-      name: monthName,
-      show: show
-    });
-    lastMonth = monthName;
-  }
-  
-  this.setData({
-    heatmapData: heatmapData,
-    monthColumns: monthColumns
-  });
-  
-  console.log('热力图初始化完成', heatmapData.length, '行', heatmapData[0]?.length, '列');
-},
-  
+  },
+
   onReady() {},
 
   // 绘制折线图
@@ -228,6 +168,7 @@ initHeatmapData() {
         const canvas = res[0].node;
         const ctx = canvas.getContext('2d');
         const { weeklyData } = this.data;
+        if (!weeklyData || weeklyData.length === 0) return;
         
         const dpr = wx.getSystemInfoSync().pixelRatio;
         const canvasWidth = res[0].width;
@@ -241,9 +182,9 @@ initHeatmapData() {
         const chartWidth = canvasWidth - padding.left - padding.right;
         const chartHeight = canvasHeight - padding.top - padding.bottom;
         
-        const maxValue = Math.max(...weeklyData, 10);
+        const maxValue = Math.max(...weeklyData, 1);
         const minValue = 0;
-        const valueRange = maxValue - minValue;
+        const valueRange = maxValue - minValue || 1;
         
         const points = weeklyData.map((value, index) => {
           const x = padding.left + (index / (weeklyData.length - 1)) * chartWidth;

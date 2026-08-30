@@ -113,12 +113,11 @@ Page({
     wx.navigateBack();
   },
 
-  // 点击用户头像/昵称区域
+  // 点击用户头像/昵称 → 跳转聊天页
   onAvatarTap() {
-    const sellerId = this.data.goodsInfo.sellerId;
+    const info = this.data.goodsInfo;
     wx.navigateTo({
-      url: `/pages/user/user?userId=${sellerId}`,
-      fail: () => wx.showToast({ title: '用户主页开发中', icon: 'none' })
+      url: `/pages/message/Message_detail/Message_detail?userId=${info.sellerId}&nickname=${encodeURIComponent(info.sellerName || '')}&avatar=${encodeURIComponent(info.sellerAvatar || '')}`
     });
   },
 
@@ -154,10 +153,28 @@ Page({
     }
   },
 
-  // 点击立即购买 → 创建订单（需认证）
+  // 点击立即购买 → 创建订单（需认证，且不能买自己的）
   async onBuyNow() {
     const app = getApp();
     const g = app && app.globalData;
+    // 通过云函数获取当前用户 openid，校验不能买自己的商品
+    try {
+      const pingRes = await wx.cloud.callFunction({ name: 'backend', data: { action: 'test/ping' } });
+      const myOpenId = (pingRes.result && pingRes.result.data && pingRes.result.data.openid) || '';
+      const sellerId = this.data.goodsInfo.sellerId;
+      if (myOpenId && sellerId && myOpenId === sellerId) {
+        wx.showModal({
+          title: '提示',
+          content: '不能购买自己发布的商品',
+          showCancel: false,
+          confirmText: '知道了'
+        });
+        return;
+      }
+    } catch (e) {
+      console.error('获取 openid 失败:', e);
+    }
+
     if (!g || !g.isLogin || g.authLevel < 2) {
       wx.showModal({
         title: '需要认证',

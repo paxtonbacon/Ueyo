@@ -1,6 +1,15 @@
 <!--components/comments/comments.wxml-->
+<wxs module="dateUtil" src="/utils/date.wxs"></wxs>
 <view class="comment-section">
   <view class="section-title">评论 {{totalCount}}</view>
+
+  <!-- 快捷一级评论输入框（小红书风格） -->
+  <view class="quick-input-bar" bindtap="onQuickInputTap">
+    <image class="quick-input-avatar" src="{{currentUserAvatar}}" mode="aspectFill"></image>
+    <view class="quick-input-box">
+      <text class="quick-input-placeholder">说点什么...</text>
+    </view>
+  </view>
   
   <view class="comment-list">
     <view wx:for="{{comments}}" wx:key="id" class="comment-item">
@@ -11,7 +20,7 @@
           <view class="comment-header">
             <text class="user-name" catchtap="onUserTap" data-user-id="{{item.userId}}">{{item.userName}}</text>
             <view class="comment-actions">
-              <text class="comment-time">{{item.createTime}}</text>
+              <text class="comment-time">{{dateUtil.formatShort(item.createTime)}}</text>
               <view class="like-wrap" catchtap="onLike" data-id="{{item.id}}" data-type="comment">
                 <image class="like-icon" src="{{item.isLiked ? '/images/like_filled.png' : '/images/like_outline.png'}}" mode="aspectFit"></image>
                 <text class="like-count">{{item.likeCount}}</text>
@@ -33,7 +42,7 @@
               <view class="reply-header">
                 <text class="reply-user" catchtap="onUserTap" data-user-id="{{item.userId}}">{{item.userName}}</text>
                 <view class="reply-actions">
-                  <text class="reply-time">{{item.createTime}}</text>
+                  <text class="reply-time">{{dateUtil.formatShort(item.createTime)}}</text>
                   <view class="like-wrap" catchtap="onLike" data-id="{{item.id}}" data-type="reply">
                     <image class="like-icon" src="{{item.isLiked ? '/images/like_filled.png' : '/images/like_outline.png'}}" mode="aspectFit"></image>
                     <text class="like-count">{{item.likeCount}}</text>

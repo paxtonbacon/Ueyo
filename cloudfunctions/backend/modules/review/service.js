@@ -1,6 +1,7 @@
 // modules/review/service.js
 const { validateSubmitReview } = require('./validator')
 const { SELLER_STATUS, BUYER_STATUS, PUT_STATUS, GET_STATUS } = require('../../constants/enums')
+const { getUserByOpenId } = require('../../utils/helper')
 
 // ========== 1. 提交评价（支持 goods + bounty） ==========
 async function submitReview(event) {
@@ -47,18 +48,20 @@ async function submitGoodsReview(db, OPENID, data) {
   const existRes = await db.collection('reviews').where({ goodsId, 'reviewerInfo._id': OPENID }).count()
   if (existRes.total > 0) throw new Error('您已评价过该商品')
 
-  const result = await db.collection('reviews').add({
-    data: { goodsId, direction: dir, ratingType: ratingType || 'good', content: content || '', images: images || [], isAnonymous: isAnonymous || false, reviewerInfo: { _id: OPENID }, revieweeInfo: { _id: revieweeId }, reviewType: 'goods', createdAt: Date.now() }
-  })
-
-  const scoreResult = await updateCreditScore(db, revieweeId, ratingType)
-
-  // 更新商品状态
+  // 1) 先更新商品状态（核心流程，必须成功）
   if (dir === 'seller_to_buyer') {
     await db.collection('goods').doc(goodsId).update({ data: { seller_status: SELLER_STATUS.ALL_DOWN } })
   } else {
     await db.collection('goods').doc(goodsId).update({ data: { buyer_status: BUYER_STATUS.HAVE_DOWN } })
   }
+
+  // 2) 写入评价记录
+  const result = await db.collection('reviews').add({
+    data: { goodsId, direction: dir, ratingType: ratingType || 'good', content: content || '', images: images || [], isAnonymous: isAnonymous || false, reviewerInfo: { _id: OPENID }, revieweeInfo: { _id: revieweeId }, reviewType: 'goods', createdAt: Date.now() }
+  })
+
+  // 3) 更新信用分（非核心流程，失败不影响主流程）
+  const scoreResult = await updateCreditScore(db, revieweeId, ratingType)
 
   return { reviewId: result._id, message: '评价成功', newCreditScore: scoreResult.score, newCreditLevel: scoreResult.level }
 }
@@ -86,32 +89,35 @@ async function submitBountyReview(db, OPENID, data) {
   if (OPENID === revieweeId) throw new Error('不能评价自己')
 
   // 防重复
-  const existRes = await db.collection('bounties_review').where({ bountyId, 'reviewerInfo._id': OPENID }).count()
+  const existRes = await db.collection('bounties_reviews').where({ bountyId, 'reviewerInfo._id': OPENID }).count()
   if (existRes.total > 0) throw new Error('您已评价过该悬赏')
 
-  const result = await db.collection('bounties_review').add({
+  // 1) 先更新悬赏状态（核心流程）
+  if (dir === 'seller_to_buyer') {
+    await db.collection('bounties').doc(bountyId).update({ data: { put_status: PUT_STATUS.ALL_DOWN } })
+  } else {
+    await db.collection('bounties').doc(bountyId).update({ data: { get_status: GET_STATUS.HAVE_DOWN } })
+  }
+
+  // 2) 写入评价记录
+  const result = await db.collection('bounties_reviews').add({
     data: { bountyId, direction: dir, ratingType: ratingType || 'good', content: content || '', images: images || [], isAnonymous: isAnonymous || false, reviewerInfo: { _id: OPENID }, revieweeInfo: { _id: revieweeId }, reviewType: 'bounty', createdAt: Date.now() }
   })
 
+  // 3) 更新信用分（非核心流程）
   const scoreResult = await updateCreditScore(db, revieweeId, ratingType)
-
-  // 更新悬赏状态
-  if (dir === 'seller_to_buyer') {
-    // 发布方评价 → put_status 变 3all_down
-    await db.collection('bounties').doc(bountyId).update({ data: { put_status: PUT_STATUS.ALL_DOWN } })
-  } else {
-    // 接取方评价 → get_status 变 3have_down
-    await db.collection('bounties').doc(bountyId).update({ data: { get_status: GET_STATUS.HAVE_DOWN } })
-  }
 
   return { reviewId: result._id, message: '评价成功', newCreditScore: scoreResult.score, newCreditLevel: scoreResult.level }
 }
 
 // ========== 辅助：更新信用分 + 等级 ==========
-async function updateCreditScore(db, userId, ratingType) {
-  const userRes = await db.collection('users').doc(userId).get()
-  const user = userRes.data
-  if (!user) return { score: 100, level: '1' }
+// 注意：userId 参数是 _openid（非 users 集合的 doc._id）
+async function updateCreditScore(db, openid, ratingType) {
+  if (!openid) return { score: 100, level: '1' }
+
+  // 通过 _openid 查找用户（不可直接用 doc(openid)，因为 openid 不是 _id）
+  const user = await getUserByOpenId(db, openid)
+  if (!user || !user._id) return { score: 100, level: '1' }
 
   // 评分权重：好评+2，中评0，差评-3
   const deltaMap = { 'good': 2, 'neutral': 0, 'bad': -3 }
@@ -127,7 +133,7 @@ async function updateCreditScore(db, userId, ratingType) {
   else if (newScore >= 40) level = '3'  // 一般
   else level = '4'                       // 较差
 
-  await db.collection('users').doc(userId).update({
+  await db.collection('users').doc(user._id).update({
     data: { creditScore: newScore, creditLevel: level }
   })
 

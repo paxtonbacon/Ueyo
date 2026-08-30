@@ -47,6 +47,17 @@ style="margin-top: {{navTotalHeight}}px;">
     <text class="char-count desc-count">{{description.length}}/500</text>
   </view>
 
+  <!-- 话题分类选择 -->
+  <view class="info-card">
+    <picker class="info-picker" mode="selector" range="{{topicTitles}}" value="{{topicIndex}}" bindchange="onTopicChange">
+      <view class="info-row">
+        <text class="info-label">话题分类</text>
+        <text class="info-value">{{topicTitles[topicIndex] || '请选择'}}</text>
+        <text class="info-arrow">›</text>
+      </view>
+    </picker>
+  </view>
+
   <!-- 发布按钮（在卡片外部） -->
   <view class="publish-btn" bindtap="onPublish">
     <text class="publish-text">发布</text>

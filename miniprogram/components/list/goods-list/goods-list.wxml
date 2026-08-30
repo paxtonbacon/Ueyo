@@ -11,7 +11,7 @@
       <text class="condition">{{item.condition}}</text>
     </view>
     <!-- 卖家信息：改为 catchtap 阻止冒泡 -->
-    <view class="seller-row" catchtap="onSellerTap" data-seller-id="{{item.sellerId}}">
+    <view class="seller-row" catchtap="onSellerTap" data-seller-id="{{item.sellerId}}" data-name="{{item.sellerName}}" data-avatar="{{item.sellerAvatar}}">
       <image class="seller-avatar" src="{{item.sellerAvatar}}" mode="aspectFill"></image>
       <text class="seller-name">{{item.sellerName}}</text>
     </view>

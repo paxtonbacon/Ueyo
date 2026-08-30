@@ -1,11 +1,20 @@
 <!--pages/self/Setting/Setting.wxml-->
 <!--pages/index/index.wxml-->
+<wxs module="dateUtil" src="/utils/date.wxs"></wxs>
 <view class="page">
   <navigation-bar title="个人设置" back="{{true}}" color="black" background="#FFF"></navigation-bar>
 
   <view class="content">
     <!-- 个人信息卡片 -->
     <view class="info-card">
+      <!-- 可编辑头像 -->
+      <view class="info-item" bindtap="editAvatar">
+        <text class="info-label">头像</text>
+        <view class="info-right">
+          <image class="avatar-preview" src="{{avatarUrl}}" mode="aspectFill"></image>
+          <text class="arrow">></text>
+        </view>
+      </view>
       <!-- 可编辑昵称 -->
       <view class="info-item" bindtap="editNickname">
         <text class="info-label">昵称</text>
@@ -34,7 +43,7 @@
       <view class="info-item">
         <text class="info-label">注册时间</text>
         <view class="info-right">
-          <text class="info-value">{{registerTime}}</text>
+          <text class="info-value">{{dateUtil.formatDate(registerTime)}}</text>
         </view>
       </view>
     </view>
@@ -57,6 +66,11 @@
           color="#07c160"
         />
       </view>
+    </view>
+
+    <!-- 提交修改按钮 -->
+    <view class="submit-btn" bindtap="onSubmitChanges">
+      <text>提交修改</text>
     </view>
 
     <!-- 退出登录按钮 -->

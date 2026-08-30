@@ -1,4 +1,5 @@
 <!--pages/message/People/People.wxml-->
+<wxs module="dateUtil" src="/utils/date.wxs"></wxs>
 <navigation-bar title="聊天" back="{{false}}" color="black" background="#FFF"></navigation-bar>
 <view class="chat-list">
   <block wx:for="{{chatList}}" wx:key="id">
@@ -10,7 +11,7 @@
       <view class="content">
         <view class="top-line">
           <text class="nickname">{{item.nickname}}</text>
-          <text class="time">{{item.lastTime}}</text>
+          <text class="time">{{dateUtil.formatShort(item.lastTime)}}</text>
         </view>
         <view class="bottom-line">
           <text class="last-msg">{{item.lastMsg}}</text>

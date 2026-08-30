@@ -1,0 +1,43 @@
+/**
+ * 日期格式化工具（WXS）
+ * 将 Unix 毫秒时间戳转换为 yyyy-MM-dd HH:mm:ss 格式
+ */
+function formatDate(timestamp) {
+  if (!timestamp) return '';
+  var date = getDate(timestamp);
+  var year = date.getFullYear();
+  var month = date.getMonth() + 1;
+  var day = date.getDate();
+  var hour = date.getHours();
+  var minute = date.getMinutes();
+  var second = date.getSeconds();
+  // 补零
+  month = month < 10 ? '0' + month : month;
+  day = day < 10 ? '0' + day : day;
+  hour = hour < 10 ? '0' + hour : hour;
+  minute = minute < 10 ? '0' + minute : minute;
+  second = second < 10 ? '0' + second : second;
+  return year + '-' + month + '-' + day + ' ' + hour + ':' + minute + ':' + second;
+}
+
+/**
+ * 简短格式：MM-dd HH:mm
+ */
+function formatShort(timestamp) {
+  if (!timestamp) return '';
+  var date = getDate(timestamp);
+  var month = date.getMonth() + 1;
+  var day = date.getDate();
+  var hour = date.getHours();
+  var minute = date.getMinutes();
+  month = month < 10 ? '0' + month : month;
+  day = day < 10 ? '0' + day : day;
+  hour = hour < 10 ? '0' + hour : hour;
+  minute = minute < 10 ? '0' + minute : minute;
+  return month + '-' + day + ' ' + hour + ':' + minute;
+}
+
+module.exports = {
+  formatDate: formatDate,
+  formatShort: formatShort
+};

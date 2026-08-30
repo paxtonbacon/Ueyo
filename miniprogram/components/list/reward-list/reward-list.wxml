@@ -18,7 +18,7 @@
       </view>
       
       <!-- 买家信息 -->
-      <view class="buyer-row" catchtap="onBuyerTap" data-buyer-id="{{item.buyerId}}">
+      <view class="buyer-row" catchtap="onBuyerTap" data-buyer-id="{{item.buyerId}}" data-name="{{item.buyerName}}" data-avatar="{{item.buyerAvatar}}">
         <image class="buyer-avatar" src="{{item.buyerAvatar}}" mode="aspectFill"></image>
         <text class="buyer-name">{{item.buyerName}}</text>
       </view>

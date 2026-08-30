@@ -98,10 +98,15 @@ Component({
       this.triggerEvent('cardtap', { id });
     },
 
-    // 点击用户区域（跳转用户主页，阻止冒泡）
+    // 点击用户区域 → 跳转聊天页
     onUserTap(e) {
-      const userId = e.currentTarget.dataset.userId;
-      this.triggerEvent('usertap', { userId });
+      const { userId } = e.currentTarget.dataset;
+      const item = this.data.list.find(i => i.userId === userId);
+      const name = item ? item.userName : '';
+      const avatar = item ? item.userAvatar : '';
+      wx.navigateTo({
+        url: `/pages/message/Message_detail/Message_detail?userId=${userId}&nickname=${encodeURIComponent(name)}&avatar=${encodeURIComponent(avatar)}`
+      });
       e.stopPropagation();
     },
 

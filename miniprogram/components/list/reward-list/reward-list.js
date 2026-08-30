@@ -83,10 +83,9 @@ Component({
     },
 
     onBuyerTap(e) {
-      const buyerId = e.currentTarget.dataset.buyerId;
+      const { buyerId, name, avatar } = e.currentTarget.dataset;
       wx.navigateTo({
-        url: `/pages/buyer/buyer?buyerId=${buyerId}`,
-        fail: () => wx.showToast({ title: '买家主页开发中', icon: 'none' })
+        url: `/pages/message/Message_detail/Message_detail?userId=${buyerId}&nickname=${encodeURIComponent(name || '')}&avatar=${encodeURIComponent(avatar || '')}`
       });
     },
 

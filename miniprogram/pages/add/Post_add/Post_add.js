@@ -23,10 +23,14 @@ function requireAuth() {
 Page({
   data: {
     title: '',
-    content: '',               // 与后端接口字段对齐
+    content: '',
     imageList: [],
-    imageFileIDs: [],          // 云存储 fileID 列表
-    topicId: '',               // 所属话题ID（从页面参数获取）
+    imageFileIDs: [],
+    topicId: '',
+    topicList: [],
+    topicTitles: [],
+    topicIndex: 0,
+    relatedTopicId: '',
     statusBarHeight: 20,
     navTotalHeight: 64
   },
@@ -37,16 +41,9 @@ Page({
       wx.navigateBack({ delta: 1, fail: () => wx.switchTab({ url: '/pages/self/Myself/Myself' }) });
       return;
     }
-    // 从页面参数获取话题ID（如从话题页跳转时传入）
+    this.loadTopicList();
     if (options.topicId) {
       this.setData({ topicId: options.topicId });
-    } else {
-      // 若无 topicId，提示用户
-      wx.showModal({
-        title: '提示',
-        content: '请从话题页进入发帖，或联系管理员获取话题ID',
-        showCancel: false
-      });
     }
   },
 
@@ -57,6 +54,50 @@ Page({
     const navContentHeight = isIOS ? 44 : 48;
     const navTotalHeight = statusBarHeight + navContentHeight;
     this.setData({ statusBarHeight, navTotalHeight });
+  },
+
+  // ========== 加载话题列表 ==========
+  async loadTopicList() {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: { action: 'social/topic/list', data: { page: 1, pageSize: 50 } }
+      });
+      if (res.result && res.result.code === 0) {
+        const topics = res.result.data.topic_list || [];
+        const titles = topics.map(t => t.title);
+        titles.push('其他');
+        // 如果有传入的 topicId，自动选中对应话题
+        let index = 0;
+        let relatedId = 'others';
+        if (this.data.topicId) {
+          const found = topics.findIndex(t => t.id === this.data.topicId);
+          if (found >= 0) {
+            index = found;
+            relatedId = topics[found].id;
+          }
+        }
+        this.setData({
+          topicList: topics,
+          topicTitles: titles,
+          topicIndex: index,
+          relatedTopicId: relatedId
+        });
+      }
+    } catch (e) {
+      console.error('加载话题列表失败:', e);
+    }
+  },
+
+  // ========== 话题选择 ==========
+  onTopicChange(e) {
+    const index = parseInt(e.detail.value);
+    const topicList = this.data.topicList;
+    let relatedTopicId = 'others';
+    if (index < topicList.length) {
+      relatedTopicId = topicList[index].id;
+    }
+    this.setData({ topicIndex: index, relatedTopicId });
   },
 
   // ========== 标题输入 ==========
@@ -143,21 +184,17 @@ Page({
       wx.showToast({ title: '请上传至少一张图片', icon: 'none' });
       return;
     }
-    if (!this.data.topicId) {
-      wx.showModal({
-        title: '提示',
-        content: '缺少话题ID，请返回选择话题后再发帖',
-        showCancel: false
-      });
+    if (!this.data.relatedTopicId) {
+      wx.showToast({ title: '请选择话题分类', icon: 'none' });
       return;
     }
 
-    // ----- 构造请求参数 -----
     const requestData = {
       title: this.data.title.trim(),
       content: this.data.content.trim(),
-      topicId: this.data.topicId,
-      images: this.data.imageFileIDs
+      topicId: this.data.topicId || this.data.relatedTopicId,
+      images: this.data.imageFileIDs,
+      relatedTopics: this.data.relatedTopicId
     };
 
     wx.showLoading({ title: '发布中...' });

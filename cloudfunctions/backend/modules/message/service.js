@@ -1,4 +1,5 @@
 // modules/message/service.js
+const { getUserByOpenId } = require('../../utils/helper')
 
 // ========== 1. 获取会话列表 ==========
 async function getConversations(event) {
@@ -6,9 +7,10 @@ async function getConversations(event) {
   const OPENID = event.OPENID
   if (!OPENID) throw new Error('用户未登录')
 
+  // 查询 participants 数组中包含当前用户的会话
   const res = await db.collection('messages')
     .where({
-      participants: OPENID
+      participants: db.command.all([OPENID])
     })
     .orderBy('lastTime', 'desc')
     .limit(50)
@@ -17,12 +19,11 @@ async function getConversations(event) {
   const list = res.data || []
   const conversations = []
   for (const msg of list) {
-    const otherId = msg.participants.find(p => p !== OPENID) || ''
+    const otherId = (msg.participants || []).find(p => p !== OPENID) || ''
     let otherUser = {}
     if (otherId) {
       try {
-        const userRes = await db.collection('users').doc(otherId).get()
-        otherUser = userRes.data || {}
+        otherUser = await getUserByOpenId(db, otherId)
       } catch (e) { /* 忽略 */ }
     }
     conversations.push({
@@ -46,25 +47,36 @@ async function getMessages(event) {
   if (!OPENID) throw new Error('用户未登录')
   if (!targetUserId) throw new Error('目标用户ID不能为空')
 
+  const _ = db.command
   const res = await db.collection('messages_detail')
-    .where({
-      $or: [
-        { from: OPENID, to: targetUserId },
-        { from: targetUserId, to: OPENID }
-      ]
-    })
+    .where(_.or([
+      { from: OPENID, to: targetUserId },
+      { from: targetUserId, to: OPENID }
+    ]))
     .orderBy('createdAt', 'desc')
     .skip((page - 1) * pageSize)
     .limit(pageSize)
     .get()
 
   const list = (res.data || []).reverse()
+
+  // 获取双方头像
+  let myAvatar = '', otherAvatar = ''
+  try {
+    const myUser = await getUserByOpenId(db, OPENID)
+    myAvatar = myUser.avatarUrl || ''
+  } catch (e) {}
+  try {
+    const otherUser = await getUserByOpenId(db, targetUserId)
+    otherAvatar = otherUser.avatarUrl || ''
+  } catch (e) {}
+
   const messages = list.map(m => ({
     id: m._id,
     from: m.from === OPENID ? 'self' : 'other',
     content: m.content || '',
     time: m.createdAt || '',
-    avatar: m.from === OPENID ? '' : ''
+    avatar: m.from === OPENID ? myAvatar : otherAvatar
   }))
 
   return { messages }
@@ -81,7 +93,7 @@ async function sendMessage(event) {
 
   const now = Date.now()
   
-  // 写入消息详情
+  // 1) 写入消息详情
   await db.collection('messages_detail').add({
     data: {
       from: OPENID,
@@ -91,14 +103,19 @@ async function sendMessage(event) {
     }
   })
 
-  // 更新会话摘要
-  const participants = [OPENID, targetUserId].sort()
-  const existingRes = await db.collection('messages')
-    .where({ participants: db.command.all(participants) })
+  // 2) 更新/创建会话摘要（双方公用一条记录）
+  // 先查出当前用户参与的所有会话，再用 JS 筛选匹配的那条
+  const myConversations = await db.collection('messages')
+    .where({ participants: db.command.all([OPENID]) })
     .get()
 
-  if (existingRes.data.length > 0) {
-    await db.collection('messages').doc(existingRes.data[0]._id).update({
+  const existing = (myConversations.data || []).find(
+    c => c.participants && c.participants.includes(targetUserId)
+  )
+
+  if (existing) {
+    // 更新已有会话
+    await db.collection('messages').doc(existing._id).update({
       data: {
         lastContent: content.trim(),
         lastTime: now,
@@ -106,6 +123,8 @@ async function sendMessage(event) {
       }
     })
   } else {
+    // 新建会话（参与者排序固定）
+    const participants = [OPENID, targetUserId].sort()
     await db.collection('messages').add({
       data: {
         participants: participants,

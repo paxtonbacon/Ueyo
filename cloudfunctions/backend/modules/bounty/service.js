@@ -1,12 +1,13 @@
 // modules/bounty/service.js
 const { validateBountyId, validatePublish } = require('./validator')
 const { PUT_STATUS, GET_STATUS } = require('../../constants/enums')
+const { getUserByOpenId, updateUserByOpenId } = require('../../utils/helper')
 
 // ========== 发布悬赏 ==========
 async function publishBounty(event) {
   const db = event.db
   const OPENID = event.OPENID
-  const { title, description, category, expectedPrice, deliveryRequirement, images } = event.data || {}
+  const { title, description, category, minPrice, maxPrice, tradeMethod, images, relatedTopics } = event.data || {}
 
   // 校验
   validatePublish(event.data)
@@ -16,7 +17,8 @@ async function publishBounty(event) {
   }
 
   // 金额转分（防止浮点误差）
-  const priceInFen = Math.round(expectedPrice * 100)
+  const minPriceInFen = Math.round((minPrice || 0) * 100)
+  const maxPriceInFen = Math.round((maxPrice || 0) * 100)
 
   // 写入数据库
   const result = await db.collection('bounties').add({
@@ -24,12 +26,14 @@ async function publishBounty(event) {
       title: title.trim(),
       description: description.trim(),
       category,
-      expectedPrice: priceInFen,
-      deliveryRequirement: deliveryRequirement || '',
+      minPrice: minPriceInFen,
+      maxPrice: maxPriceInFen,
+      tradeMethod: tradeMethod || '',
       images: images || [],
       put_status: PUT_STATUS.HAVEN_PUB,     // 已发布
       get_status: GET_STATUS.NONE,           // 无接收者
       buyerInfo: { _id: OPENID },
+      relatedTopics: relatedTopics || '',
       createdAt: Date.now()
     }
   })
@@ -44,6 +48,7 @@ async function publishBounty(event) {
   }
 
   return {
+    
     bountyId: result._id,
     message: '悬赏发布成功'
   }
@@ -72,19 +77,19 @@ async function getBountyList(event) {
     let buyerInfo = {}
     if (item.buyerInfo && item.buyerInfo._id) {
       try {
-        const userRes = await db.collection('users').doc(item.buyerInfo._id).get()
-        buyerInfo = userRes.data || {}
+        buyerInfo = await getUserByOpenId(db, item.buyerInfo._id)
       } catch (e) { /* 忽略 */ }
     }
 
-    const price = item.expectedPrice || 0
+    const minPrice = item.minPrice || item.expectedPrice || 0  // 兼容旧数据
+    const maxPrice = item.maxPrice || item.expectedPrice || 0
     formattedList.push({
       id: item._id,
       title: item.title || '',
       price: {
-        min: price / 100,
-        max: price / 100
-      }, // 前端期望 (lower_num, upper_num)，这里单个价格就传相同的值
+        min: minPrice / 100,
+        max: maxPrice / 100
+      },
       sellerId: item.buyerInfo?._id || '', // 前端字段名用了 seller，实际是发布者
       sellerAvatarCDN: buyerInfo.avatarUrl || '',
       sellerName: buyerInfo.nickName || '匿名用户',
@@ -113,8 +118,7 @@ async function getBountyDetail(event) {
   let buyerInfo = {}
   if (bounty.buyerInfo && bounty.buyerInfo._id) {
     try {
-      const userRes = await db.collection('users').doc(bounty.buyerInfo._id).get()
-      buyerInfo = userRes.data || {}
+      buyerInfo = await getUserByOpenId(db, bounty.buyerInfo._id)
     } catch (e) { /* 忽略 */ }
   }
 
@@ -135,8 +139,7 @@ async function getBountyDetail(event) {
       let authorInfo = {}
       if (c.authorInfo && c.authorInfo._id) {
         try {
-          const authorRes = await db.collection('users').doc(c.authorInfo._id).get()
-          authorInfo = authorRes.data || {}
+          authorInfo = await getUserByOpenId(db, c.authorInfo._id)
         } catch (e) { /* 忽略 */ }
       }
       comments.push({
@@ -157,17 +160,18 @@ async function getBountyDetail(event) {
   }
 
   // 4. 组装返回（与前端 #9 完全对齐）
-  const price = bounty.expectedPrice || 0
+  const minPrice = bounty.minPrice || bounty.expectedPrice || 0  // 兼容旧数据
+  const maxPrice = bounty.maxPrice || bounty.expectedPrice || 0
   return {
     title: bounty.title || '',
     buyerId: bounty.buyerInfo?._id || '',
     buyerAvatarCDN: buyerInfo.avatarUrl || '',
     buyerName: buyerInfo.nickName || '匿名用户',
     PictureCDN: bounty.images || [],
-    minprice: price / 100,
-    maxprice: price / 100,
+    minprice: minPrice / 100,
+    maxprice: maxPrice / 100,
     desc: bounty.description || '',
-    tradeWays: '面交/快递均可', // 前端需要，悬赏暂无独立交易方式字段
+    tradeWays: bounty.tradeMethod || '面交/快递均可',
     comments: comments,
     is_favorite: false,
     recommend_rewards: {
@@ -254,10 +258,7 @@ async function updateBountyStatus(event) {
       }
       // 移除接单者的 acceptTasks
       if (bounty.takerInfo?._id) {
-        const takerRes = await db.collection('users').doc(bounty.takerInfo._id).get()
-        if (takerRes.data) {
-          await db.collection('users').doc(bounty.takerInfo._id).update({ data: { acceptTasks: _.pull(bountyId) } })
-        }
+        await updateUserByOpenId(db, bounty.takerInfo._id, { acceptTasks: _.pull(bountyId) })
       }
       return { message: '已汇报失败，悬赏已重新上架', newBountyId: newRes._id }
     }
@@ -278,11 +279,8 @@ async function updateBountyStatus(event) {
       const newRes = await db.collection('bounties').add({ data: newBounty })
       // 更新发布者
       if (bounty.buyerInfo?._id) {
-        const putterRes = await db.collection('users').doc(bounty.buyerInfo._id).get()
-        if (putterRes.data) {
-          await db.collection('users').doc(bounty.buyerInfo._id).update({ data: { publishedTasks: _.pull(bountyId) } })
-          await db.collection('users').doc(bounty.buyerInfo._id).update({ data: { publishedTasks: _.push(newRes._id) } })
-        }
+        await updateUserByOpenId(db, bounty.buyerInfo._id, { publishedTasks: _.pull(bountyId) })
+        await updateUserByOpenId(db, bounty.buyerInfo._id, { publishedTasks: _.push(newRes._id) })
       }
       // 移除接单者
       const takerRes = await db.collection('users').where({ _openid: OPENID }).get()

@@ -1,5 +1,6 @@
 // modules/social/service.js
 const { validateId, validatePublishPost, validateSubmitReply } = require('./validator')
+const { getUserByOpenId } = require('../../utils/helper')
 
 // ========== 1. 话题列表（前端 #11） ==========
 async function getTopicList(event) {
@@ -64,8 +65,7 @@ async function getPostList(event) {
     let authorInfo = {}
     if (post.authorInfo && post.authorInfo._id) {
       try {
-        const authorRes = await db.collection('users').doc(post.authorInfo._id).get()
-        authorInfo = authorRes.data || {}
+        authorInfo = await getUserByOpenId(db, post.authorInfo._id)
       } catch (e) { /* 忽略 */ }
     }
 
@@ -102,8 +102,7 @@ async function getTopicPosts(event) {
   let adminInfo = {}
   if (topic.authorInfo && topic.authorInfo._id) {
     try {
-      const adminRes = await db.collection('users').doc(topic.authorInfo._id).get()
-      adminInfo = adminRes.data || {}
+      adminInfo = await getUserByOpenId(db, topic.authorInfo._id)
     } catch (e) { /* 忽略 */ }
   }
 
@@ -121,8 +120,7 @@ async function getTopicPosts(event) {
     let authorInfo = {}
     if (post.authorInfo && post.authorInfo._id) {
       try {
-        const authorRes = await db.collection('users').doc(post.authorInfo._id).get()
-        authorInfo = authorRes.data || {}
+        authorInfo = await getUserByOpenId(db, post.authorInfo._id)
       } catch (e) { /* 忽略 */ }
     }
 
@@ -174,8 +172,7 @@ async function getPostDetail(event) {
   let authorInfo = {}
   if (post.authorInfo && post.authorInfo._id) {
     try {
-      const authorRes = await db.collection('users').doc(post.authorInfo._id).get()
-      authorInfo = authorRes.data || {}
+      authorInfo = await getUserByOpenId(db, post.authorInfo._id)
     } catch (e) { /* 忽略 */ }
   }
 
@@ -201,8 +198,7 @@ async function getPostDetail(event) {
       let commentAuthor = {}
       if (c.authorInfo && c.authorInfo._id) {
         try {
-          const authorRes = await db.collection('users').doc(c.authorInfo._id).get()
-          commentAuthor = authorRes.data || {}
+          commentAuthor = await getUserByOpenId(db, c.authorInfo._id)
         } catch (e) { /* 忽略 */ }
       }
 
@@ -213,8 +209,8 @@ async function getPostDetail(event) {
           const parentRes = await db.collection('topics').doc(c.parentReplyId).get()
           const parent = parentRes.data
           if (parent && parent.authorInfo && parent.authorInfo._id) {
-            const parentAuthorRes = await db.collection('users').doc(parent.authorInfo._id).get()
-            replyToUserName = parentAuthorRes.data?.nickName || null
+            const parentAuthor = await getUserByOpenId(db, parent.authorInfo._id)
+            replyToUserName = parentAuthor.nickName || null
           }
         } catch (e) { /* 忽略 */ }
       }
@@ -259,7 +255,7 @@ async function getPostDetail(event) {
 async function publishPost(event) {
   const db = event.db
   const OPENID = event.OPENID
-  const { title, content, topicId, images } = event.data || {}
+  const { title, content, topicId, images, relatedTopics } = event.data || {}
 
   validatePublishPost(event.data)
 
@@ -267,9 +263,13 @@ async function publishPost(event) {
     throw new Error('无法获取当前用户身份，请重新登录')
   }
 
-  // 验证话题是否存在
-  const topicRes = await db.collection('topics').doc(topicId).get()
-  if (!topicRes.data) throw new Error('话题不存在')
+  // 验证话题是否存在（relatedTopics 为 "others" 时跳过）
+  if (relatedTopics && relatedTopics !== 'others') {
+    try {
+      const topicRes = await db.collection('topics').doc(relatedTopics).get()
+      if (!topicRes.data) throw new Error('话题不存在')
+    } catch (e) { /* 忽略 */ }
+  }
 
   // 写入数据库
   const result = await db.collection('topics').add({
@@ -278,11 +278,12 @@ async function publishPost(event) {
       title: title.trim(),
       content: content.trim(),
       images: images || [],
-      topicId: topicId,
+      topicId: topicId || relatedTopics || '',
+      relatedTopics: relatedTopics || '',
       authorInfo: { _id: OPENID },
       likeCount: 0,
       replyCount: 0,
-      auditStatus: '1', // 待审核（后续可扩展）
+      auditStatus: '1',
       createdAt: Date.now()
     }
   })
@@ -311,21 +312,40 @@ async function submitReply(event) {
 
   const dt = detailType || 1  // 默认帖子评论
 
-  // 验证父级是否存在
-  const parentRes = await db.collection('topics').doc(ParentId).get()
-  const parent = parentRes.data
+  // 验证父级是否存在（根据 detailType 跨集合查询）
+  let parent = null;
+  if (dt === 1) {
+    // 帖子评论：父级在 topics 集合
+    const parentRes = await db.collection('topics').doc(ParentId).get()
+    parent = parentRes.data
+  } else {
+    // 商品/悬赏：先尝试 topics（可能是回复已有评论），再尝试对应集合
+    try {
+      const parentRes = await db.collection('topics').doc(ParentId).get()
+      parent = parentRes.data
+    } catch (e) { /* 不在 topics 中，继续尝试 */ }
+    if (!parent) {
+      const collectionName = dt === 2 ? 'goods' : 'bounties'
+      try {
+        const parentRes = await db.collection(collectionName).doc(ParentId).get()
+        parent = parentRes.data
+      } catch (e) { /* 忽略 */ }
+    }
+  }
   if (!parent) throw new Error('目标不存在')
 
   let postId = ParentId
   let parentReplyId = null
   if (parent.type === '3') {
+    // 回复已有评论（评论都在 topics 中，type='3'）
     postId = parent.postId || ParentId
     parentReplyId = ParentId
-  } else if (parent.type === '2' || dt > 1) {
-    // 帖子一级回复 或 商品/悬赏的评论
+  } else if (parent.type === '2') {
+    // 帖子一级回复
     postId = ParentId
   } else {
-    throw new Error('只能对帖子、回复、商品或悬赏进行评论')
+    // 商品/悬赏一级评论（没有 type 字段，直接使用 ParentId）
+    postId = ParentId
   }
 
   const result = await db.collection('topics').add({
@@ -336,7 +356,7 @@ async function submitReply(event) {
       images: [],
       postId: postId,
       parentReplyId: parentReplyId,
-      topicId: parent.topicId || '',
+      topicId: (parent.topicId) || '',
       authorInfo: { _id: OPENID },
       linkedGoodsInfo: parent.linkedGoodsInfo || null,
       likeCount: 0,

@@ -2,6 +2,7 @@
 const { validateUserId, validateUpdateProfile } = require('./validator')
 const jwt = require('../../utils/jwt')
 const crypto = require('crypto')
+const { getUserByOpenId, updateUserByOpenId } = require('../../utils/helper')
 
 // ========== 1. 微信登录（一级鉴权：返回 JWT） ==========
 async function wxLogin(event) {
@@ -48,6 +49,7 @@ async function wxLogin(event) {
 
   return {
     userId: user._id,
+    openId: OPENID,
     nickName: user.nickName,
     avatarUrl: user.avatarUrl,
     email: user.cauEmail || '',
@@ -235,9 +237,8 @@ async function getProfile(event) {
   const OPENID = event.OPENID
   if (!OPENID) throw new Error('用户未登录')
 
-  const userRes = await db.collection('users').doc(OPENID).get()
-  const user = userRes.data
-  if (!user) throw new Error('用户不存在')
+  const user = await getUserByOpenId(db, OPENID)
+  if (!user._id) throw new Error('用户不存在')
 
   // 过滤敏感字段
   return {
@@ -267,15 +268,23 @@ async function updateProfile(event) {
   validateUpdateProfile(data)
 
   // 只允许更新部分字段
-  const allowedFields = ['nickName', 'avatarUrl', 'realName', 'studentId', 'phone', 'college', 'grade', 'dormArea']
+  const allowedFields = ['nickName', 'avatarUrl', 'gender', 'realName', 'studentId', 'phone', 'college', 'grade', 'dormArea']
   const updateData = {}
   for (const key of allowedFields) {
     if (data[key] !== undefined) {
       updateData[key] = data[key]
     }
   }
+  if (Object.keys(updateData).length === 0) {
+    throw new Error('没有可更新的字段')
+  }
 
-  await db.collection('users').doc(OPENID).update({
+  // 通过 _openid 查找用户（而非用 OPENID 作 doc id）
+  const userRes = await db.collection('users').where({ _openid: OPENID }).get()
+  if (!userRes.data || userRes.data.length === 0) {
+    throw new Error('用户不存在')
+  }
+  await db.collection('users').doc(userRes.data[0]._id).update({
     data: updateData
   })
 
@@ -288,9 +297,8 @@ async function getFavorites(event) {
   const OPENID = event.OPENID
   if (!OPENID) throw new Error('用户未登录')
 
-  const userRes = await db.collection('users').doc(OPENID).get()
-  const user = userRes.data
-  if (!user) throw new Error('用户不存在')
+  const user = await getUserByOpenId(db, OPENID)
+  if (!user._id) throw new Error('用户不存在')
 
   const favoriteIds = user.favorites || []
   if (favoriteIds.length === 0) {
@@ -322,9 +330,8 @@ async function toggleFavorite(event) {
   if (!OPENID) throw new Error('用户未登录')
   if (!goodsId) throw new Error('商品ID不能为空')
 
-  const userRes = await db.collection('users').doc(OPENID).get()
-  const user = userRes.data
-  if (!user) throw new Error('用户不存在')
+  const user = await getUserByOpenId(db, OPENID)
+  if (!user._id) throw new Error('用户不存在')
 
   const favorites = user.favorites || []
   const index = favorites.indexOf(goodsId)
@@ -332,15 +339,11 @@ async function toggleFavorite(event) {
 
   if (index > -1) {
     // 取消收藏
-    await db.collection('users').doc(OPENID).update({
-      data: { favorites: _.pull(goodsId) }
-    })
+    await updateUserByOpenId(db, OPENID, { favorites: _.pull(goodsId) })
     return { isFavorited: false, message: '已取消收藏' }
   } else {
     // 添加收藏
-    await db.collection('users').doc(OPENID).update({
-      data: { favorites: _.push(goodsId) }
-    })
+    await updateUserByOpenId(db, OPENID, { favorites: _.push(goodsId) })
     return { isFavorited: true, message: '已收藏' }
   }
 }
@@ -455,6 +458,154 @@ function formatBountyItem(b) {
   }
 }
 
+// ========== 8. 用户活跃统计（聚合所有已有集合） ==========
+async function getActivity(event) {
+  const db = event.db
+  const OPENID = event.OPENID
+  if (!OPENID) throw new Error('用户未登录')
+
+  const now = new Date()
+  now.setHours(23, 59, 59, 999)
+
+  // 近90天日期范围（热力图用）
+  const quarterAgo = new Date(now)
+  quarterAgo.setDate(quarterAgo.getDate() - 90)
+  quarterAgo.setHours(0, 0, 0, 0)
+  const tsStart = quarterAgo.getTime()
+
+  // 并行查询所有集合并聚合
+  const [goodsRes, bountiesRes, topicsRes, ordersRes, bountyOrdersRes, messagesRes] = await Promise.all([
+    db.collection('goods').where({ 'sellerInfo._id': OPENID, createdAt: db.command.gte(tsStart) }).field({ createdAt: true }).get().catch(() => ({ data: [] })),
+    db.collection('bounties').where({ 'buyerInfo._id': OPENID, createdAt: db.command.gte(tsStart) }).field({ createdAt: true }).get().catch(() => ({ data: [] })),
+    db.collection('topics').where({ 'authorInfo._id': OPENID, createdAt: db.command.gte(tsStart) }).field({ createdAt: true }).get().catch(() => ({ data: [] })),
+    db.collection('orders').where({ 'buyerInfo._id': OPENID, createdAt: db.command.gte(tsStart) }).field({ createdAt: true }).get().catch(() => ({ data: [] })),
+    db.collection('bounties_order').where({ 'takerInfo._id': OPENID, createdAt: db.command.gte(tsStart) }).field({ createdAt: true }).get().catch(() => ({ data: [] })),
+    db.collection('messages_detail').where({ from: OPENID, createdAt: db.command.gte(tsStart) }).field({ createdAt: true }).get().catch(() => ({ data: [] }))
+  ])
+
+  // 合并所有时间戳
+  const allTimestamps = [
+    ...(goodsRes.data || []).map(r => r.createdAt),
+    ...(bountiesRes.data || []).map(r => r.createdAt),
+    ...(topicsRes.data || []).map(r => r.createdAt),
+    ...(ordersRes.data || []).map(r => r.createdAt),
+    ...(bountyOrdersRes.data || []).map(r => r.createdAt),
+    ...(messagesRes.data || []).map(r => r.createdAt)
+  ]
+
+  // 按日期聚合: { '2026-06-25': 5, ... }
+  const dateMap = {}
+  for (const ts of allTimestamps) {
+    const d = new Date(ts)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    dateMap[key] = (dateMap[key] || 0) + 1
+  }
+
+  // ===== 热力图数据：7行(周一~周日) × 约13列(近91天) =====
+  const heatmapData = [[], [], [], [], [], [], []] // 0=周日, 1=周一...6=周六 → 显示为 周一~周日
+  const monthColumns = []
+  let lastMonth = -1
+
+  for (let i = 90; i >= 0; i--) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const count = dateMap[key] || 0
+
+    let level = 0
+    if (count > 0 && count <= 1) level = 1
+    else if (count <= 3) level = 2
+    else if (count <= 6) level = 3
+    else if (count > 6) level = 4
+
+    const dayOfWeek = d.getDay() // 0=Sun, 1=Mon...
+    const rowIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1 // 转为 周一=0...周日=6
+
+    heatmapData[rowIndex].push({ date: key, count, level })
+
+    // 月份标签（列索引）
+    const m = d.getMonth() + 1
+    if (m !== lastMonth) {
+      monthColumns.push({ name: `${m}月`, show: true })
+      lastMonth = m
+    } else {
+      monthColumns.push({ name: `${m}月`, show: false })
+    }
+  }
+
+  // ===== 近7天趋势数据 =====
+  const weekDays = []
+  const weeklyData = []
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    const count = dateMap[key] || 0
+    weekDays.push(`${d.getMonth() + 1}/${d.getDate()}`)
+    weeklyData.push(count)
+  }
+
+  // ===== 汇总统计 =====
+  const total7Days = weeklyData.reduce((a, b) => a + b, 0)
+
+  // 连续活跃天数（从今天往前数）
+  let streak = 0
+  for (let i = 0; i < 90; i++) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    if (dateMap[key] && dateMap[key] > 0) {
+      streak++
+    } else {
+      break
+    }
+  }
+
+  // 总发布数（商品+悬赏+帖子）
+  const totalPosts = (goodsRes.data || []).length + (bountiesRes.data || []).length + (topicsRes.data || []).length
+
+  // 趋势百分比（近7天 vs 前7天）
+  const prevWeekData = []
+  for (let i = 13; i >= 7; i--) {
+    const d = new Date(now)
+    d.setDate(d.getDate() - i)
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    prevWeekData.push(dateMap[key] || 0)
+  }
+  const prevTotal = prevWeekData.reduce((a, b) => a + b, 0)
+  let weeklyTrend = 0
+  if (prevTotal > 0) {
+    weeklyTrend = Math.round(((total7Days - prevTotal) / prevTotal) * 100)
+  } else if (total7Days > 0) {
+    weeklyTrend = 100
+  }
+
+  // ===== 洞察建议 =====
+  const insights = [
+    '你通常在下午时段最活跃，建议在这个时间段发布内容，获得更多互动！',
+    '周末你的活跃度更高，多参与热门话题讨论吧！',
+    `连续活跃 ${streak} 天！保持这个节奏，即将解锁「活跃达人」勋章！`,
+    '本周数据稳步上升，继续加油！',
+    '晚上浏览商品最多，不妨看看有什么好物上新~'
+  ]
+  const insightText = insights[Math.floor(Math.random() * insights.length)]
+
+  return {
+    heatmapData,
+    monthColumns,
+    weekDays,
+    weeklyData,
+    weeklyTrend,
+    summaryData: [
+      { icon: '📊', value: total7Days, label: '近7天活跃' },
+      { icon: '🔥', value: streak, label: '连续活跃' },
+      { icon: '⭐', value: 0, label: '获得点赞' },
+      { icon: '✏️', value: totalPosts, label: '新增发布' }
+    ],
+    insightText
+  }
+}
+
 module.exports = {
   wxLogin,
   emailRegister,
@@ -465,5 +616,6 @@ module.exports = {
   getFavorites,
   toggleFavorite,
   myGoods,
-  myBounties
+  myBounties,
+  getActivity
 }

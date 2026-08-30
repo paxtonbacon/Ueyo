@@ -27,19 +27,20 @@ Page({
     title: '',
     description: '',
     imageList: [],
-    imageFileIDs: [],        // 云存储 fileID 列表
+    imageFileIDs: [],
     minPrice: '',
     maxPrice: '',
     tradeMethod: '',
     quantity: '1',
-    category: '',
-    showRecommend: false,
-    recommendList: [],
-    mockCategories: ['宠物用品', '宠物食品', '宠物活体', '宠物服务', '电子产品', '二手书籍', '服装鞋帽', '美妆护肤']
+    topicList: [],
+    topicTitles: [],
+    topicIndex: 0,
+    relatedTopicId: ''
   },
 
   onLoad() {
     this.initNavBarHeight();
+    this.loadTopicList();
   },
 
   onShow() {
@@ -55,6 +56,35 @@ Page({
     const navContentHeight = isIOS ? 44 : 48;
     const navTotalHeight = statusBarHeight + navContentHeight;
     this.setData({ statusBarHeight, navTotalHeight });
+  },
+
+  // ========== 加载话题列表 ==========
+  async loadTopicList() {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'backend',
+        data: { action: 'social/topic/list', data: { page: 1, pageSize: 50 } }
+      });
+      if (res.result && res.result.code === 0) {
+        const topics = res.result.data.topic_list || [];
+        const titles = topics.map(t => t.title);
+        titles.push('其他');
+        this.setData({ topicList: topics, topicTitles: titles });
+      }
+    } catch (e) {
+      console.error('加载话题列表失败:', e);
+    }
+  },
+
+  // ========== 话题选择 ==========
+  onTopicChange(e) {
+    const index = parseInt(e.detail.value);
+    const topicList = this.data.topicList;
+    let relatedTopicId = 'others';
+    if (index < topicList.length) {
+      relatedTopicId = topicList[index].id;
+    }
+    this.setData({ topicIndex: index, relatedTopicId });
   },
 
   // 标题输入
@@ -154,35 +184,6 @@ Page({
     this.setData({ quantity: val });
   },
 
-  // 分类输入与推荐
-  onCategoryInput(e) {
-    const input = e.detail.value;
-    this.setData({ category: input });
-    if (input.trim()) {
-      const matched = this.data.mockCategories.filter(cat => cat.includes(input));
-      this.setData({ recommendList: matched, showRecommend: true });
-    } else {
-      this.setData({ showRecommend: false });
-    }
-  },
-  onCategoryFocus() {
-    if (this.data.category.trim()) {
-      const matched = this.data.mockCategories.filter(cat => cat.includes(this.data.category));
-      this.setData({ recommendList: matched, showRecommend: true });
-    } else {
-      this.setData({ recommendList: this.data.mockCategories.slice(0, 5), showRecommend: true });
-    }
-  },
-  onCategoryBlur() {
-    setTimeout(() => {
-      this.setData({ showRecommend: false });
-    }, 200);
-  },
-  selectRecommend(e) {
-    const selected = e.currentTarget.dataset.category;
-    this.setData({ category: selected, showRecommend: false });
-  },
-
   // 发布悬赏（调用云函数 bounty/publish）
   async onPublish() {
     if (!this.data.title || this.data.title.length < 4) {
@@ -201,8 +202,8 @@ Page({
       wx.showToast({ title: '请填写价格区间', icon: 'none' });
       return;
     }
-    if (!this.data.category) {
-      wx.showToast({ title: '请选择分类', icon: 'none' });
+    if (!this.data.relatedTopicId) {
+      wx.showToast({ title: '请选择话题分类', icon: 'none' });
       return;
     }
 
@@ -217,10 +218,12 @@ Page({
           data: {
             title: this.data.title.trim(),
             description: this.data.description.trim(),
-            category: this.data.category,
-            expectedPrice: parseFloat(this.data.minPrice) || 0,
-            deliveryRequirement: this.data.tradeMethod || '面交',
-            images: this.data.imageFileIDs
+            category: this.data.topicTitles[this.data.topicIndex] || '其他',
+            minPrice: parseFloat(this.data.minPrice) || 0,
+            maxPrice: parseFloat(this.data.maxPrice) || 0,
+            tradeMethod: this.data.tradeMethod || '面交',
+            images: this.data.imageFileIDs,
+            relatedTopics: this.data.relatedTopicId
           }
         }
       });

@@ -38,11 +38,12 @@ async function createBountyOrder(event) {
 
   const result = await db.collection('bounties_order').add({ data: orderData })
 
-  // 4. 更新悬赏状态：发布者→待评价，接收者→待履约
+  // 4. 更新悬赏状态：发布者→待评价，接收者→待履约，同时写入接单者信息
   await db.collection('bounties').doc(bountyId).update({
     data: {
       put_status: PUT_STATUS.WAITED_FOR_DIS,
       get_status: GET_STATUS.WAITED_FOR_DO,
+      takerInfo: { _id: OPENID },
       updatedAt: Date.now()
     }
   })

@@ -4,7 +4,14 @@ Component({
     // 话题ID（从父页面传入）
     topicId: {
       type: String,
-      value: ''
+      value: '',
+      observer: function(newVal) {
+        // 当 topicId 从空变为有效值时，触发数据加载
+        if (newVal && !this._hasLoaded) {
+          this._hasLoaded = true;
+          this.loadTopicInfo();
+        }
+      }
     }
   },
   data: {
@@ -22,7 +29,12 @@ Component({
   },
   lifetimes: {
     attached() {
-      this.loadTopicInfo(); // loadTopicInfo 已包含首页帖子加载
+      // 如果 attached 时 topicId 已有值（页面 onLoad setData 已生效），直接加载
+      const topicId = this.properties.topicId;
+      if (topicId && !this._hasLoaded) {
+        this._hasLoaded = true;
+        this.loadTopicInfo();
+      }
     }
   },
   methods: {

@@ -18,10 +18,10 @@ const orderController = require('./modules/order/controller')
 const bountyOrderController = require('./modules/bounty_order/controller')
 
 const routeMap = {
-  'test/ping': async () => ({
+  'test/ping': async (event) => ({
     code: 0,
-    msg: 'pong（原生API + 手写校验）',
-    data: { timestamp: Date.now() }
+    msg: 'pong',
+    data: { timestamp: Date.now(), openid: event.OPENID || '' }
   }),
   'goods/detail': goodsController.getGoodsDetail,
   'goods/list': goodsController.getGoodsList,
@@ -47,6 +47,7 @@ const routeMap = {
    'user/toggleFavorite': userController.toggleFavorite,
    'user/myGoods': userController.myGoods,
    'user/myBounties': userController.myBounties,
+   'user/activity': userController.getActivity,
    'user/emailRegister': userController.emailRegister,
    'user/verifyEmail': userController.verifyEmail,
    'user/emailLogin': userController.emailLogin,
